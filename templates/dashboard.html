@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Glamour Tools{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+  <h1 style="margin-bottom:0;">Dashboard</h1>
+  <a href="/new-estimate" class="btn btn-gold">+ New Estimate</a>
+</div>
+
+<!-- Unpaid Invoices -->
+<div class="card">
+  <h2>Unpaid Invoices</h2>
+  {% if invoices %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Client</th>
+        <th>Amount Due</th>
+        <th>Due Date</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+      {% set due = inv.DueDate or '' %}
+      {% set days_old = ((now - due)|int) if due else 0 %}
+      <tr>
+        <td>{{ inv.DocNumber or '—' }}</td>
+        <td>{{ inv.CustomerRef.name }}</td>
+        <td>${{ '%.2f'|format(inv.Balance|float) }}</td>
+        <td>{{ inv.DueDate or '—' }}</td>
+        <td>
+          {% if inv.DueDate %}
+            <span class="badge badge-warn">Open</span>
+          {% else %}
+            <span class="badge badge-warn">Open</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="/send/{{ inv.Id }}" class="btn btn-outline btn-sm">Send Reminder</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No unpaid invoices.</p>
+  {% endif %}
+</div>
+
+<!-- Open Estimates -->
+<div class="card">
+  <h2>Open Estimates</h2>
+  {% if estimates %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Client</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for est in estimates %}
+      <tr>
+        <td>{{ est.DocNumber or '—' }}</td>
+        <td>{{ est.CustomerRef.name }}</td>
+        <td>${{ '%.2f'|format(est.TotalAmt|float) }}</td>
+        <td>{{ est.TxnDate or '—' }}</td>
+        <td><span class="badge badge-warn">{{ est.TxnStatus }}</span></td>
+        <td>
+          <a href="/convert/{{ est.Id }}" class="btn btn-gold btn-sm"
+             onclick="return confirm('Convert this estimate to an invoice?')">
+            → Invoice
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No open estimates.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

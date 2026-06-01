@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Send Invoice — Glamour Tools{% endblock %}
+{% block content %}
+
+<h1>Send Invoice</h1>
+
+<div class="card" style="max-width:480px;">
+  {% if invoice %}
+  <table style="margin-bottom:1.5rem;">
+    <tr>
+      <td style="color:rgba(255,255,255,0.45); width:120px;">Invoice #</td>
+      <td>{{ invoice.DocNumber or '—' }}</td>
+    </tr>
+    <tr>
+      <td style="color:rgba(255,255,255,0.45);">Client</td>
+      <td>{{ invoice.CustomerRef.name }}</td>
+    </tr>
+    <tr>
+      <td style="color:rgba(255,255,255,0.45);">Total</td>
+      <td>${{ '%.2f'|format(invoice.TotalAmt|float) }}</td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label>Send to Email *</label>
+      <input type="email" name="email" value="{{ prefill_email }}" placeholder="client@example.com" required>
+    </div>
+    <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+      <a href="/" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-gold">Send Invoice</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
