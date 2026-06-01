@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ fabric.client_name }} — Fabric — Glamour Tools{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+  <a href="/inventory?client={{ fabric.client_name | urlencode }}" style="color:var(--gold); text-decoration:none; font-size:0.88rem;">
+    ← {{ fabric.client_name }}'s Fabrics
+  </a>
+  <form method="POST" onsubmit="return confirm('Remove this fabric from inventory?')">
+    <input type="hidden" name="action" value="delete">
+    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+  </form>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items:start;">
+
+  <!-- Photo -->
+  <div>
+    {% if fabric.photo_path %}
+    <img src="/static/fabric_photos/{{ fabric.photo_path }}" class="fabric-large" alt="Fabric photo">
+    {% else %}
+    <div style="width:100%; height:220px; background:var(--dark3); border-radius:6px; border:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.2); font-size:2rem; margin-bottom:1rem;">
+      No Photo
+    </div>
+    {% endif %}
+
+    <div class="card" style="margin-top:0;">
+      <h2 style="margin-bottom:0.75rem;">Quick Info</h2>
+      <table>
+        <tr><td style="color:rgba(255,255,255,0.45); width:110px;">Client</td><td>{{ fabric.client_name }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Type</td><td>{{ fabric.fabric_type or '—' }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Color</td><td>{{ fabric.color or '—' }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Pattern</td><td>{{ fabric.pattern or '—' }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Yardage</td><td>{{ (fabric.yardage|string ~ ' yd') if fabric.yardage else '—' }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Location</td><td>{{ fabric.location or '—' }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Supplier</td><td>{{ fabric.supplier or '—' }}</td></tr>
+        <tr><td style="color:rgba(255,255,255,0.45);">Added</td><td style="font-size:0.82rem;">{{ fabric.created_at[:10] if fabric.created_at else '—' }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="card">
+        <h2 style="margin-bottom:1.2rem;">Edit Fabric</h2>
+
+        <div class="form-group">
+          <label>Client Name *</label>
+          <input type="text" name="client_name" value="{{ fabric.client_name }}" list="client-list" required>
+          <datalist id="client-list">
+            {% for c in clients %}<option value="{{ c }}">{% endfor %}
+          </datalist>
+        </div>
+
+        <div class="grid2">
+          <div class="form-group">
+            <label>Fabric Type</label>
+            <input type="text" name="fabric_type" value="{{ fabric.fabric_type or '' }}">
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="text" name="color" value="{{ fabric.color or '' }}">
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="form-group">
+            <label>Pattern</label>
+            <input type="text" name="pattern" value="{{ fabric.pattern or '' }}">
+          </div>
+          <div class="form-group">
+            <label>Yardage</label>
+            <input type="number" name="yardage" value="{{ fabric.yardage or '' }}" min="0" step="0.25">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Storage Location</label>
+          <input type="text" name="location" value="{{ fabric.location or '' }}">
+        </div>
+        <div class="form-group">
+          <label>Supplier</label>
+          <input type="text" name="supplier" value="{{ fabric.supplier or '' }}">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes">{{ fabric.notes or '' }}</textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Replace Photo</label>
+          <input type="file" name="photo" accept="image/*">
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end;">
+        <button type="submit" class="btn btn-gold">Save Changes</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+{% endblock %}

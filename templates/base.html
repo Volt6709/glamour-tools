@@ -6,107 +6,114 @@
   <title>{% block title %}Glamour Tools{% endblock %}</title>
   <style>
     :root {
-      --gold: #c9a84c;
-      --gold-dim: rgba(201,168,76,0.15);
-      --dark: #141412;
-      --dark2: #1e1d1a;
-      --dark3: #2a2927;
-      --cream: #f7f2ea;
-      --cream2: #ede8de;
-      --red: #e05252;
-      --green: #52a070;
-      --serif: 'Georgia', serif;
-      --sans: system-ui, sans-serif;
+      --gold: #c9a84c; --gold-dim: rgba(201,168,76,0.15);
+      --dark: #141412; --dark2: #1e1d1a; --dark3: #2a2927;
+      --cream: #f7f2ea; --cream2: #ede8de;
+      --red: #e05252; --green: #52a070; --blue: #5288e0;
+      --serif: 'Georgia', serif; --sans: system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--dark); color: var(--cream); font-family: var(--sans); font-size: 15px; min-height: 100vh; }
 
     header {
-      background: var(--dark2);
-      border-bottom: 1px solid var(--gold-dim);
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 56px;
+      background: var(--dark2); border-bottom: 1px solid var(--gold-dim);
+      padding: 0 2rem; display: flex; align-items: center;
+      justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 10;
     }
-    header .brand { font-family: var(--serif); font-size: 1.1rem; color: var(--gold); letter-spacing: 0.05em; }
-    header nav a { color: var(--cream2); text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; opacity: 0.8; }
-    header nav a:hover { color: var(--gold); opacity: 1; }
-
-    main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
-
-    h1 { font-family: var(--serif); font-size: 1.6rem; color: var(--gold); margin-bottom: 1.5rem; font-weight: 400; }
-    h2 { font-family: var(--serif); font-size: 1.1rem; color: var(--cream); margin-bottom: 1rem; font-weight: 400; }
-
-    .card {
-      background: var(--dark2);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+    .brand { font-family: var(--serif); font-size: 1.05rem; color: var(--gold); letter-spacing: 0.05em; }
+    nav a {
+      color: var(--cream2); text-decoration: none; margin-left: 1.5rem;
+      font-size: 0.88rem; opacity: 0.7; padding: 0.25rem 0; position: relative;
     }
+    nav a:hover, nav a.active { color: var(--gold); opacity: 1; }
+    nav a .badge {
+      position: absolute; top: -6px; right: -10px;
+      background: var(--red); color: #fff; border-radius: 9px;
+      font-size: 0.65rem; padding: 1px 5px; font-weight: 700;
+    }
+
+    main { max-width: 1040px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.55rem; color: var(--gold); margin-bottom: 1.5rem; font-weight: 400; }
+    h2 { font-family: var(--serif); font-size: 1.05rem; color: var(--cream); margin-bottom: 1rem; font-weight: 400; }
+
+    .card { background: var(--dark2); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
 
     table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); border-bottom: 1px solid var(--gold-dim); }
-    td { padding: 0.65rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; vertical-align: middle; }
+    th { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); border-bottom: 1px solid var(--gold-dim); }
+    td { padding: 0.65rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.88rem; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(255,255,255,0.02); }
 
-    .btn {
-      display: inline-block;
-      padding: 0.5rem 1.1rem;
-      border-radius: 5px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      border: none;
-      text-decoration: none;
-      font-family: var(--sans);
-    }
+    .btn { display: inline-block; padding: 0.5rem 1.1rem; border-radius: 5px; font-size: 0.85rem; cursor: pointer; border: none; text-decoration: none; font-family: var(--sans); transition: opacity 0.15s; }
     .btn-gold { background: var(--gold); color: var(--dark); font-weight: 600; }
-    .btn-gold:hover { background: #d4b05e; }
+    .btn-gold:hover { opacity: 0.88; }
     .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
     .btn-outline:hover { background: var(--gold-dim); }
-    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-danger:hover { background: rgba(224,82,82,0.12); }
+    .btn-sm { padding: 0.28rem 0.65rem; font-size: 0.78rem; }
 
     .form-group { margin-bottom: 1.1rem; }
-    label { display: block; font-size: 0.82rem; color: var(--cream2); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    input[type=text], input[type=email], input[type=number], textarea {
-      width: 100%;
-      background: var(--dark3);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 5px;
-      color: var(--cream);
-      padding: 0.55rem 0.75rem;
-      font-size: 0.95rem;
-      font-family: var(--sans);
-      outline: none;
+    label { display: block; font-size: 0.8rem; color: var(--cream2); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    input[type=text], input[type=email], input[type=number], input[type=file],
+    select, textarea {
+      width: 100%; background: var(--dark3); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px; color: var(--cream); padding: 0.55rem 0.75rem;
+      font-size: 0.93rem; font-family: var(--sans); outline: none;
     }
-    input:focus, textarea:focus { border-color: var(--gold); }
+    select option { background: var(--dark3); }
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); }
     textarea { resize: vertical; min-height: 80px; }
 
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+    .flash { padding: 0.7rem 1rem; border-radius: 5px; margin-bottom: 1rem; font-size: 0.88rem; }
+    .flash.success { background: rgba(82,160,112,0.12); border: 1px solid var(--green); color: var(--green); }
+    .flash.error { background: rgba(224,82,82,0.12); border: 1px solid var(--red); color: var(--red); }
+
+    .badge-tag { display: inline-block; padding: 0.18rem 0.5rem; border-radius: 4px; font-size: 0.73rem; font-weight: 600; }
+    .tag-gold { background: rgba(201,168,76,0.18); color: var(--gold); }
+    .tag-red { background: rgba(224,82,82,0.18); color: var(--red); }
+    .tag-green { background: rgba(82,160,112,0.18); color: var(--green); }
+    .tag-blue { background: rgba(82,136,224,0.18); color: var(--blue); }
+
+    .empty { color: rgba(255,255,255,0.28); font-style: italic; padding: 1rem 0.75rem; font-size: 0.88rem; }
+
+    .stat-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat { background: var(--dark2); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 1rem 1.5rem; flex: 1; }
+    .stat .num { font-family: var(--serif); font-size: 2rem; color: var(--gold); line-height: 1; }
+    .stat .lbl { font-size: 0.78rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.3rem; }
+
+    .fabric-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
+    .no-photo { width: 44px; height: 44px; background: var(--dark3); border-radius: 4px; border: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 1.2rem; }
+
+    .search-row { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; align-items: center; }
+    .search-row input { flex: 1; }
+    .search-row select { width: 200px; }
+
+    .email-row { display: flex; flex-direction: column; padding: 0.9rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; text-decoration: none; color: inherit; }
+    .email-row:hover { background: rgba(255,255,255,0.02); }
+    .email-row .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .email-row .sender { font-weight: 600; font-size: 0.9rem; }
+    .email-row .subject { font-size: 0.88rem; color: var(--cream2); }
+    .email-row .date { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+    .email-row .preview { font-size: 0.8rem; color: rgba(255,255,255,0.35); margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .line-row { display: grid; grid-template-columns: 1fr 130px 36px; gap: 0.6rem; align-items: center; margin-bottom: 0.5rem; }
-    .line-row input { margin: 0; }
     .remove-line { background: none; border: none; color: var(--red); cursor: pointer; font-size: 1.1rem; padding: 0; line-height: 1; }
 
-    .flash { padding: 0.7rem 1rem; border-radius: 5px; margin-bottom: 1rem; font-size: 0.9rem; }
-    .flash.success { background: rgba(82,160,112,0.15); border: 1px solid var(--green); color: var(--green); }
-    .flash.error { background: rgba(224,82,82,0.15); border: 1px solid var(--red); color: var(--red); }
-
-    .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-    .badge-warn { background: rgba(201,168,76,0.2); color: var(--gold); }
-    .badge-danger { background: rgba(224,82,82,0.2); color: var(--red); }
-
-    .empty { color: rgba(255,255,255,0.3); font-style: italic; padding: 1rem 0.75rem; font-size: 0.9rem; }
-    .total-row td { font-weight: 600; color: var(--gold); border-top: 1px solid var(--gold-dim); }
+    .fabric-large { width: 100%; max-height: 320px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 1rem; }
   </style>
 </head>
 <body>
   <header>
     <span class="brand">Glamour Upholstery — Tools</span>
     <nav>
-      <a href="/">Dashboard</a>
-      <a href="/new-estimate">New Estimate</a>
+      <a href="/" class="{{ 'active' if request.path == '/' }}">Dashboard</a>
+      <a href="/inbox" class="{{ 'active' if request.path.startswith('/inbox') }}">Inbox</a>
+      <a href="/inventory" class="{{ 'active' if request.path.startswith('/inventory') }}">Inventory</a>
+      <a href="/new-estimate" class="{{ 'active' if request.path == '/new-estimate' }}">+ Estimate</a>
     </nav>
   </header>
   <main>

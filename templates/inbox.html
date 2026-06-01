@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Inbox — Glamour Tools{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+  <h1 style="margin-bottom:0;">Inbox</h1>
+  <span style="font-size:0.82rem; color:rgba(255,255,255,0.35);">
+    Emails flagged ⚡ may be job requests
+  </span>
+</div>
+
+{% if emails and emails[0].get('error') %}
+  <div class="flash error">Could not connect to inbox: {{ emails[0].error }}</div>
+{% elif emails %}
+<div class="card" style="padding:0;">
+  {% for msg in emails %}
+  <a href="/inbox/{{ msg.imap_id }}" class="email-row" style="{{ 'border-left: 3px solid var(--gold);' if msg.is_job else '' }}">
+    <div class="meta">
+      <span class="sender">
+        {% if msg.is_job %}<span style="color:var(--gold);">⚡</span> {% endif %}
+        {{ msg.sender_name }}
+        <span style="font-weight:400; color:rgba(255,255,255,0.4); font-size:0.8rem;">&lt;{{ msg.sender_email }}&gt;</span>
+      </span>
+      <span class="date">{{ msg.date[:16] if msg.date else '' }}</span>
+    </div>
+    <div class="subject">{{ msg.subject }}</div>
+    <div class="preview">{{ msg.body[:120] | replace('\n', ' ') }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="card"><p class="empty">No emails found.</p></div>
+{% endif %}
+
+{% endblock %}

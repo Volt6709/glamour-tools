@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Add Fabric — Glamour Tools{% endblock %}
+{% block content %}
+
+<h1>Add Fabric</h1>
+
+<form method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="next" value="{{ request.referrer or '' }}">
+
+  <div class="card">
+    <h2 style="margin-bottom:1.2rem;">Client</h2>
+    <div class="form-group">
+      <label>Client Name *</label>
+      <input type="text" name="client_name" value="{{ prefill_client }}" list="client-list" placeholder="e.g. John Smith" required>
+      <datalist id="client-list">
+        {% for c in clients %}<option value="{{ c }}">{% endfor %}
+      </datalist>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom:1.2rem;">Fabric Details</h2>
+    <div class="grid3">
+      <div class="form-group">
+        <label>Fabric Type</label>
+        <input type="text" name="fabric_type" placeholder="e.g. Velvet, Leather, Linen">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <input type="text" name="color" placeholder="e.g. Navy Blue, Cream">
+      </div>
+      <div class="form-group">
+        <label>Pattern</label>
+        <input type="text" name="pattern" placeholder="e.g. Solid, Floral, Stripe">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="form-group">
+        <label>Yardage Remaining</label>
+        <input type="number" name="yardage" placeholder="0.0" min="0" step="0.25">
+      </div>
+      <div class="form-group">
+        <label>Storage Location</label>
+        <input type="text" name="location" placeholder="e.g. Shelf A-3, Client Bin #4">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Supplier</label>
+      <input type="text" name="supplier" placeholder="e.g. Keyston Bros., Rochford Supply">
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>Notes</label>
+      <textarea name="notes" placeholder="Any details — texture, care instructions, project it's for…"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom:0.75rem;">Photo</h2>
+    <p style="font-size:0.82rem; color:rgba(255,255,255,0.4); margin-bottom:0.75rem;">
+      Take a photo of the fabric so it's easy to identify later.
+    </p>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>Upload Photo</label>
+      <input type="file" name="photo" accept="image/*">
+    </div>
+  </div>
+
+  <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+    <a href="/inventory" class="btn btn-outline">Cancel</a>
+    <button type="submit" class="btn btn-gold">Save Fabric</button>
+  </div>
+</form>
+
+{% endblock %}

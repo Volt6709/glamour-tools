@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Fabric Inventory — Glamour Tools{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+  <h1 style="margin-bottom:0;">Fabric Inventory</h1>
+  <a href="/inventory/add" class="btn btn-gold">+ Add Fabric</a>
+</div>
+
+<!-- Search & Filter -->
+<form method="GET" action="/inventory">
+  <div class="search-row">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search by client, type, color, notes…">
+    <select name="client" onchange="this.form.submit()">
+      <option value="">All Clients</option>
+      {% for c in clients %}
+      <option value="{{ c }}" {{ 'selected' if active_client == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-outline">Search</button>
+    {% if search or active_client %}
+    <a href="/inventory" class="btn btn-outline" style="white-space:nowrap;">Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if active_client %}
+<div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.75rem;">
+  <span style="color:var(--gold); font-family:var(--serif); font-size:1.05rem;">{{ active_client }}</span>
+  <span style="color:rgba(255,255,255,0.3); font-size:0.82rem;">{{ fabrics|length }} fabric{{ 's' if fabrics|length != 1 }}</span>
+  <a href="/inventory/add?client={{ active_client | urlencode }}" class="btn btn-outline btn-sm">+ Add for this client</a>
+</div>
+{% endif %}
+
+{% if fabrics %}
+<div class="card" style="padding:0;">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:52px;"></th>
+        <th>Client</th>
+        <th>Type</th>
+        <th>Color / Pattern</th>
+        <th>Yardage</th>
+        <th>Location</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in fabrics %}
+      <tr>
+        <td>
+          {% if f.photo_path %}
+          <img src="/static/fabric_photos/{{ f.photo_path }}" class="fabric-thumb" alt="">
+          {% else %}
+          <div class="no-photo">□</div>
+          {% endif %}
+        </td>
+        <td>
+          <a href="/inventory?client={{ f.client_name | urlencode }}"
+             style="color:var(--gold); text-decoration:none;">{{ f.client_name }}</a>
+        </td>
+        <td>{{ f.fabric_type or '—' }}</td>
+        <td>
+          {{ f.color or '' }}
+          {% if f.pattern %}<span style="color:rgba(255,255,255,0.4);">· {{ f.pattern }}</span>{% endif %}
+        </td>
+        <td>{{ f.yardage ~ ' yd' if f.yardage else '—' }}</td>
+        <td style="font-size:0.82rem; color:rgba(255,255,255,0.55);">{{ f.location or '—' }}</td>
+        <td style="max-width:180px; font-size:0.82rem; color:rgba(255,255,255,0.45); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ f.notes or '' }}</td>
+        <td><a href="/inventory/{{ f.id }}" class="btn btn-outline btn-sm">Edit</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <p class="empty">
+    {% if search or active_client %}No fabrics match your search.
+    {% else %}No fabrics in inventory yet. <a href="/inventory/add" style="color:var(--gold);">Add the first one.</a>{% endif %}
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}
