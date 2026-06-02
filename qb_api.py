@@ -79,10 +79,11 @@ def create_estimate(client_name, client_email, line_items, message=''):
 
 
 def get_estimates():
-    query = "SELECT * FROM Estimate WHERE TxnStatus = 'Pending' OR TxnStatus = 'Accepted' ORDERBY MetaData.CreateTime DESC MAXRESULTS 25"
+    query = "SELECT * FROM Estimate MAXRESULTS 25"
     resp = requests.get(_url('query'), headers=_headers(), params={'query': query, 'minorversion': MV}, timeout=10)
     resp = _checked(resp)
-    return resp.json().get('QueryResponse', {}).get('Estimate', [])
+    estimates = resp.json().get('QueryResponse', {}).get('Estimate', [])
+    return [e for e in estimates if e.get('TxnStatus') in ('Pending', 'Accepted')]
 
 
 def estimate_to_invoice(estimate_id):
