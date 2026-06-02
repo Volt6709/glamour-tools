@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: glamour-tools
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 2 --timeout 60
+    envVars:
+      - key: QB_CLIENT_ID
+        sync: false
+      - key: QB_CLIENT_SECRET
+        sync: false
+      - key: QB_REDIRECT_URI
+        value: https://glamour-tools.onrender.com/callback
+      - key: QB_ENVIRONMENT
+        value: production
+      - key: FLASK_SECRET_KEY
+        sync: false
+      - key: SMTP_EMAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: glamour-db
+          property: connectionString
+
+databases:
+  - name: glamour-db
+    plan: free
+    databaseName: glamour
+    user: glamour

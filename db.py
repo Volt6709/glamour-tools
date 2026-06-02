@@ -1,242 +1,270 @@
-import sqlite3
 import os
+from sqlalchemy import create_engine, text
+from sqlalchemy.pool import StaticPool
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'glamour.db')
+_raw = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(os.path.dirname(__file__), 'glamour.db')}")
+DATABASE_URL = _raw.replace('postgres://', 'postgresql://', 1)
+
+_is_sqlite = DATABASE_URL.startswith('sqlite')
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    poolclass=StaticPool if _is_sqlite else None,
+)
 
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    return conn
+def _conn():
+    return engine.connect()
 
 
 def init_db():
-    conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS fabrics (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            client_name TEXT NOT NULL,
-            fabric_type TEXT,
-            color       TEXT,
-            pattern     TEXT,
-            yardage     REAL,
-            location    TEXT,
-            supplier    TEXT,
-            notes       TEXT,
-            photo_path  TEXT,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+    with _conn() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS fabrics (
+                id          SERIAL PRIMARY KEY,
+                client_name TEXT NOT NULL,
+                fabric_type TEXT,
+                color       TEXT,
+                pattern     TEXT,
+                yardage     FLOAT,
+                location    TEXT,
+                supplier    TEXT,
+                notes       TEXT,
+                photo_path  TEXT,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """) if not _is_sqlite else text("""
+            CREATE TABLE IF NOT EXISTS fabrics (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_name TEXT NOT NULL,
+                fabric_type TEXT,
+                color       TEXT,
+                pattern     TEXT,
+                yardage     REAL,
+                location    TEXT,
+                supplier    TEXT,
+                notes       TEXT,
+                photo_path  TEXT,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS email_log (
+                id            SERIAL PRIMARY KEY,
+                message_id    TEXT UNIQUE,
+                sender_name   TEXT,
+                sender_email  TEXT,
+                subject       TEXT,
+                body          TEXT,
+                received_at   TEXT,
+                status        TEXT DEFAULT 'new',
+                estimate_id   TEXT,
+                logged_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """) if not _is_sqlite else text("""
+            CREATE TABLE IF NOT EXISTS email_log (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id    TEXT UNIQUE,
+                sender_name   TEXT,
+                sender_email  TEXT,
+                subject       TEXT,
+                body          TEXT,
+                received_at   TEXT,
+                status        TEXT DEFAULT 'new',
+                estimate_id   TEXT,
+                logged_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS leads (
+                id              SERIAL PRIMARY KEY,
+                name            TEXT NOT NULL,
+                firm            TEXT,
+                email           TEXT,
+                phone           TEXT,
+                location        TEXT,
+                notes           TEXT,
+                status          TEXT DEFAULT 'new',
+                emailed_at      TIMESTAMP,
+                followup1_at    TIMESTAMP,
+                followup2_at    TIMESTAMP,
+                responded_at    TIMESTAMP,
+                created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """) if not _is_sqlite else text("""
+            CREATE TABLE IF NOT EXISTS leads (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                name            TEXT NOT NULL,
+                firm            TEXT,
+                email           TEXT,
+                phone           TEXT,
+                location        TEXT,
+                notes           TEXT,
+                status          TEXT DEFAULT 'new',
+                emailed_at      TIMESTAMP,
+                followup1_at    TIMESTAMP,
+                followup2_at    TIMESTAMP,
+                responded_at    TIMESTAMP,
+                created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.commit()
 
-        CREATE TABLE IF NOT EXISTS email_log (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            message_id    TEXT UNIQUE,
-            sender_name   TEXT,
-            sender_email  TEXT,
-            subject       TEXT,
-            body          TEXT,
-            received_at   TEXT,
-            status        TEXT DEFAULT 'new',
-            estimate_id   TEXT,
-            logged_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
 
-        CREATE TABLE IF NOT EXISTS leads (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            name            TEXT NOT NULL,
-            firm            TEXT,
-            email           TEXT,
-            phone           TEXT,
-            location        TEXT,
-            notes           TEXT,
-            status          TEXT DEFAULT 'new',
-            emailed_at      TIMESTAMP,
-            followup1_at    TIMESTAMP,
-            followup2_at    TIMESTAMP,
-            responded_at    TIMESTAMP,
-            created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-    conn.commit()
-    conn.close()
+def _rows(result):
+    return [dict(row._mapping) for row in result]
 
 
-# ── Fabric helpers ──────────────────────────────────────────────────────────
+def _row(result):
+    row = result.fetchone()
+    return dict(row._mapping) if row else None
+
+
+# ── Fabric helpers ─────────────────────────────────────────────────────────
 
 def add_fabric(client_name, fabric_type, color, pattern, yardage, location, supplier, notes, photo_path):
-    conn = get_db()
-    conn.execute(
-        """INSERT INTO fabrics
-           (client_name, fabric_type, color, pattern, yardage, location, supplier, notes, photo_path)
-           VALUES (?,?,?,?,?,?,?,?,?)""",
-        (client_name, fabric_type, color, pattern, yardage, location, supplier, notes, photo_path)
-    )
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        conn.execute(text(
+            "INSERT INTO fabrics (client_name, fabric_type, color, pattern, yardage, location, supplier, notes, photo_path) "
+            "VALUES (:cn,:ft,:co,:pa,:ya,:lo,:su,:no,:ph)"
+        ), dict(cn=client_name, ft=fabric_type, co=color, pa=pattern, ya=yardage,
+                lo=location, su=supplier, no=notes, ph=photo_path))
+        conn.commit()
 
 
 def get_fabrics(search='', client=''):
-    conn = get_db()
-    query = "SELECT * FROM fabrics WHERE 1=1"
-    params = []
+    q = "SELECT * FROM fabrics WHERE 1=1"
+    params = {}
     if client:
-        query += " AND LOWER(client_name) = LOWER(?)"
-        params.append(client)
+        q += " AND LOWER(client_name) = LOWER(:client)"
+        params['client'] = client
     if search:
-        query += " AND (LOWER(client_name) LIKE ? OR LOWER(fabric_type) LIKE ? OR LOWER(color) LIKE ? OR LOWER(notes) LIKE ?)"
-        term = f'%{search.lower()}%'
-        params.extend([term, term, term, term])
-    query += " ORDER BY client_name, created_at DESC"
-    rows = conn.execute(query, params).fetchall()
-    conn.close()
-    return rows
+        q += " AND (LOWER(client_name) LIKE :s OR LOWER(fabric_type) LIKE :s OR LOWER(color) LIKE :s OR LOWER(notes) LIKE :s)"
+        params['s'] = f'%{search.lower()}%'
+    q += " ORDER BY client_name, created_at DESC"
+    with _conn() as conn:
+        return _rows(conn.execute(text(q), params))
 
 
 def get_fabric(fabric_id):
-    conn = get_db()
-    row = conn.execute("SELECT * FROM fabrics WHERE id=?", (fabric_id,)).fetchone()
-    conn.close()
-    return row
+    with _conn() as conn:
+        return _row(conn.execute(text("SELECT * FROM fabrics WHERE id=:id"), {'id': fabric_id}))
 
 
 def update_fabric(fabric_id, client_name, fabric_type, color, pattern, yardage, location, supplier, notes, photo_path=None):
-    conn = get_db()
-    if photo_path:
-        conn.execute(
-            """UPDATE fabrics SET client_name=?, fabric_type=?, color=?, pattern=?, yardage=?,
-               location=?, supplier=?, notes=?, photo_path=?, updated_at=CURRENT_TIMESTAMP
-               WHERE id=?""",
-            (client_name, fabric_type, color, pattern, yardage, location, supplier, notes, photo_path, fabric_id)
-        )
-    else:
-        conn.execute(
-            """UPDATE fabrics SET client_name=?, fabric_type=?, color=?, pattern=?, yardage=?,
-               location=?, supplier=?, notes=?, updated_at=CURRENT_TIMESTAMP
-               WHERE id=?""",
-            (client_name, fabric_type, color, pattern, yardage, location, supplier, notes, fabric_id)
-        )
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        if photo_path:
+            conn.execute(text(
+                "UPDATE fabrics SET client_name=:cn, fabric_type=:ft, color=:co, pattern=:pa, yardage=:ya, "
+                "location=:lo, supplier=:su, notes=:no, photo_path=:ph, updated_at=CURRENT_TIMESTAMP WHERE id=:id"
+            ), dict(cn=client_name, ft=fabric_type, co=color, pa=pattern, ya=yardage,
+                    lo=location, su=supplier, no=notes, ph=photo_path, id=fabric_id))
+        else:
+            conn.execute(text(
+                "UPDATE fabrics SET client_name=:cn, fabric_type=:ft, color=:co, pattern=:pa, yardage=:ya, "
+                "location=:lo, supplier=:su, notes=:no, updated_at=CURRENT_TIMESTAMP WHERE id=:id"
+            ), dict(cn=client_name, ft=fabric_type, co=color, pa=pattern, ya=yardage,
+                    lo=location, su=supplier, no=notes, id=fabric_id))
+        conn.commit()
 
 
 def delete_fabric(fabric_id):
-    conn = get_db()
-    conn.execute("DELETE FROM fabrics WHERE id=?", (fabric_id,))
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        conn.execute(text("DELETE FROM fabrics WHERE id=:id"), {'id': fabric_id})
+        conn.commit()
 
 
 def get_clients():
-    conn = get_db()
-    rows = conn.execute("SELECT DISTINCT client_name FROM fabrics ORDER BY client_name").fetchall()
-    conn.close()
-    return [r['client_name'] for r in rows]
+    with _conn() as conn:
+        rows = _rows(conn.execute(text("SELECT DISTINCT client_name FROM fabrics ORDER BY client_name")))
+        return [r['client_name'] for r in rows]
 
 
 def get_fabric_stats():
-    conn = get_db()
-    total = conn.execute("SELECT COUNT(*) FROM fabrics").fetchone()[0]
-    clients = conn.execute("SELECT COUNT(DISTINCT client_name) FROM fabrics").fetchone()[0]
-    conn.close()
-    return {'total': total, 'clients': clients}
+    with _conn() as conn:
+        total = conn.execute(text("SELECT COUNT(*) FROM fabrics")).scalar()
+        clients = conn.execute(text("SELECT COUNT(DISTINCT client_name) FROM fabrics")).scalar()
+        return {'total': total or 0, 'clients': clients or 0}
 
 
-# ── Email log helpers ────────────────────────────────────────────────────────
+# ── Email log helpers ──────────────────────────────────────────────────────
 
 def log_email(message_id, sender_name, sender_email, subject, body, received_at):
-    conn = get_db()
     try:
-        conn.execute(
-            """INSERT OR IGNORE INTO email_log
-               (message_id, sender_name, sender_email, subject, body, received_at)
-               VALUES (?,?,?,?,?,?)""",
-            (message_id, sender_name, sender_email, subject, body, received_at)
-        )
-        conn.commit()
+        with _conn() as conn:
+            conn.execute(text(
+                "INSERT INTO email_log (message_id, sender_name, sender_email, subject, body, received_at) "
+                "VALUES (:mid,:sn,:se,:su,:bo,:ra) ON CONFLICT (message_id) DO NOTHING"
+                if not _is_sqlite else
+                "INSERT OR IGNORE INTO email_log (message_id, sender_name, sender_email, subject, body, received_at) "
+                "VALUES (:mid,:sn,:se,:su,:bo,:ra)"
+            ), dict(mid=message_id, sn=sender_name, se=sender_email, su=subject, bo=body, ra=received_at))
+            conn.commit()
     except Exception:
         pass
-    conn.close()
 
 
 def mark_email_used(message_id, estimate_id=''):
-    conn = get_db()
-    conn.execute(
-        "UPDATE email_log SET status='estimate_created', estimate_id=? WHERE message_id=?",
-        (estimate_id, message_id)
-    )
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        conn.execute(text(
+            "UPDATE email_log SET status='estimate_created', estimate_id=:eid WHERE message_id=:mid"
+        ), {'eid': estimate_id, 'mid': message_id})
+        conn.commit()
 
 
-def get_email_log():
-    conn = get_db()
-    rows = conn.execute("SELECT * FROM email_log ORDER BY logged_at DESC LIMIT 50").fetchall()
-    conn.close()
-    return rows
-
-
-# ── Lead helpers ─────────────────────────────────────────────────────────────
+# ── Lead helpers ───────────────────────────────────────────────────────────
 
 def add_lead(name, firm, email, phone, location, notes=''):
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO leads (name, firm, email, phone, location, notes) VALUES (?,?,?,?,?,?)",
-        (name, firm, email, phone, location, notes)
-    )
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        conn.execute(text(
+            "INSERT INTO leads (name, firm, email, phone, location, notes) VALUES (:na,:fi,:em,:ph,:lo,:no)"
+        ), dict(na=name, fi=firm, em=email, ph=phone, lo=location, no=notes))
+        conn.commit()
 
 
 def get_leads(status=''):
-    conn = get_db()
-    if status:
-        rows = conn.execute("SELECT * FROM leads WHERE status=? ORDER BY created_at DESC", (status,)).fetchall()
-    else:
-        rows = conn.execute("SELECT * FROM leads ORDER BY created_at DESC").fetchall()
-    conn.close()
-    return rows
+    with _conn() as conn:
+        if status:
+            return _rows(conn.execute(text("SELECT * FROM leads WHERE status=:s ORDER BY created_at DESC"), {'s': status}))
+        return _rows(conn.execute(text("SELECT * FROM leads ORDER BY created_at DESC")))
 
 
 def get_lead(lead_id):
-    conn = get_db()
-    row = conn.execute("SELECT * FROM leads WHERE id=?", (lead_id,)).fetchone()
-    conn.close()
-    return row
+    with _conn() as conn:
+        return _row(conn.execute(text("SELECT * FROM leads WHERE id=:id"), {'id': lead_id}))
 
 
 def update_lead_status(lead_id, status, timestamp_field=None):
-    conn = get_db()
-    if timestamp_field:
-        conn.execute(f"UPDATE leads SET status=?, {timestamp_field}=CURRENT_TIMESTAMP WHERE id=?", (status, lead_id))
-    else:
-        conn.execute("UPDATE leads SET status=? WHERE id=?", (status, lead_id))
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        if timestamp_field:
+            conn.execute(text(f"UPDATE leads SET status=:s, {timestamp_field}=CURRENT_TIMESTAMP WHERE id=:id"),
+                         {'s': status, 'id': lead_id})
+        else:
+            conn.execute(text("UPDATE leads SET status=:s WHERE id=:id"), {'s': status, 'id': lead_id})
+        conn.commit()
 
 
 def update_lead(lead_id, name, firm, email, phone, location, notes):
-    conn = get_db()
-    conn.execute(
-        "UPDATE leads SET name=?, firm=?, email=?, phone=?, location=?, notes=? WHERE id=?",
-        (name, firm, email, phone, location, notes, lead_id)
-    )
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        conn.execute(text(
+            "UPDATE leads SET name=:na, firm=:fi, email=:em, phone=:ph, location=:lo, notes=:no WHERE id=:id"
+        ), dict(na=name, fi=firm, em=email, ph=phone, lo=location, no=notes, id=lead_id))
+        conn.commit()
 
 
 def delete_lead(lead_id):
-    conn = get_db()
-    conn.execute("DELETE FROM leads WHERE id=?", (lead_id,))
-    conn.commit()
-    conn.close()
+    with _conn() as conn:
+        conn.execute(text("DELETE FROM leads WHERE id=:id"), {'id': lead_id})
+        conn.commit()
 
 
 def get_lead_stats():
-    conn = get_db()
-    total = conn.execute("SELECT COUNT(*) FROM leads").fetchone()[0]
-    emailed = conn.execute("SELECT COUNT(*) FROM leads WHERE status != 'new'").fetchone()[0]
-    responded = conn.execute("SELECT COUNT(*) FROM leads WHERE status='responded'").fetchone()[0]
-    converted = conn.execute("SELECT COUNT(*) FROM leads WHERE status='converted'").fetchone()[0]
-    conn.close()
-    return {'total': total, 'emailed': emailed, 'responded': responded, 'converted': converted}
+    with _conn() as conn:
+        total = conn.execute(text("SELECT COUNT(*) FROM leads")).scalar() or 0
+        emailed = conn.execute(text("SELECT COUNT(*) FROM leads WHERE status != 'new'")).scalar() or 0
+        responded = conn.execute(text("SELECT COUNT(*) FROM leads WHERE status='responded'")).scalar() or 0
+        converted = conn.execute(text("SELECT COUNT(*) FROM leads WHERE status='converted'")).scalar() or 0
+        return {'total': total, 'emailed': emailed, 'responded': responded, 'converted': converted}
