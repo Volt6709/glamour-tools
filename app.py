@@ -352,4 +352,5 @@ def fabric_photo(filename):
 if __name__ == '__main__':
     print('\n  Glamour Tools is running.')
     print('  Open http://localhost:5000 in your browser.\n')
-    app.run(debug=False, port=5001)
+    port = int(os.getenv('PORT', 5000))
+    app.run(debug=False, port=port)
