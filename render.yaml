@@ -6,6 +6,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --workers 1 --threads 2 --timeout 60
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
       - key: QB_CLIENT_ID
         sync: false
       - key: QB_CLIENT_SECRET
