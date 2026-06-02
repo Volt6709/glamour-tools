@@ -1,6 +1,7 @@
 .env
 tokens.json
 glamour.db
+*.log
 static/fabric_photos/
 __pycache__/
 *.pyc

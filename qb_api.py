@@ -1,5 +1,6 @@
 import requests
 from qb_auth import get_valid_token, BASE_URL
+from logger import log_api_call, log_error
 
 MV = '65'  # minorversion
 
@@ -11,6 +12,17 @@ def _headers():
         'Accept': 'application/json',
         'Content-Type': 'application/json',
     }
+
+
+def _checked(resp, method='GET'):
+    tid = resp.headers.get('intuit_tid')
+    try:
+        resp.raise_for_status()
+        log_api_call(method, resp.url, resp.status_code, intuit_tid=tid)
+    except requests.HTTPError as e:
+        log_api_call(method, resp.url, resp.status_code, intuit_tid=tid, error=str(e))
+        raise
+    return resp
 
 
 def _realm():
@@ -26,7 +38,7 @@ def _url(path):
 def get_or_create_customer(name, email=''):
     query = f"SELECT * FROM Customer WHERE DisplayName = '{name.replace(chr(39), chr(39)*2)}'"
     resp = requests.get(_url('query'), headers=_headers(), params={'query': query, 'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     customers = resp.json().get('QueryResponse', {}).get('Customer', [])
     if customers:
         return customers[0]['Id']
@@ -35,7 +47,7 @@ def get_or_create_customer(name, email=''):
     if email:
         payload['PrimaryEmailAddr'] = {'Address': email}
     resp = requests.post(_url('customer'), json=payload, headers=_headers(), params={'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json()['Customer']['Id']
 
 
@@ -62,20 +74,20 @@ def create_estimate(client_name, client_email, line_items, message=''):
         payload['BillEmail'] = {'Address': client_email}
 
     resp = requests.post(_url('estimate'), json=payload, headers=_headers(), params={'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json()['Estimate']
 
 
 def get_estimates():
     query = "SELECT * FROM Estimate WHERE TxnStatus IN ('Pending', 'Accepted') ORDERBY MetaData.CreateTime DESC MAXRESULTS 25"
     resp = requests.get(_url('query'), headers=_headers(), params={'query': query, 'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json().get('QueryResponse', {}).get('Estimate', [])
 
 
 def estimate_to_invoice(estimate_id):
     resp = requests.get(_url(f'estimate/{estimate_id}'), headers=_headers(), params={'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     est = resp.json()['Estimate']
 
     payload = {
@@ -87,7 +99,7 @@ def estimate_to_invoice(estimate_id):
         payload['BillEmail'] = est['BillEmail']
 
     resp = requests.post(_url('invoice'), json=payload, headers=_headers(), params={'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json()['Invoice']
 
 
@@ -98,18 +110,18 @@ def send_invoice(invoice_id, email):
         params={'sendTo': email, 'minorversion': MV},
         timeout=10,
     )
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json()
 
 
 def get_unpaid_invoices():
     query = "SELECT * FROM Invoice WHERE Balance > '0' ORDERBY DueDate MAXRESULTS 50"
     resp = requests.get(_url('query'), headers=_headers(), params={'query': query, 'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json().get('QueryResponse', {}).get('Invoice', [])
 
 
 def get_invoice(invoice_id):
     resp = requests.get(_url(f'invoice/{invoice_id}'), headers=_headers(), params={'minorversion': MV}, timeout=10)
-    resp.raise_for_status()
+    resp = _checked(resp)
     return resp.json()['Invoice']

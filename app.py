@@ -8,6 +8,7 @@ import qb_api
 import db
 import email_reader
 import outreach
+from logger import log_error, log_info
 
 load_dotenv()
 db.init_db()
@@ -69,6 +70,7 @@ def index():
         invoices = qb_api.get_unpaid_invoices()
         estimates = qb_api.get_estimates()
     except Exception as e:
+        log_error('dashboard', e)
         flash(f'QuickBooks error: {e}', 'error')
         invoices, estimates = [], []
 
