@@ -24,6 +24,11 @@
     <div class="num">{{ fabric_stats.clients }}</div>
     <div class="lbl">Clients in Inventory</div>
   </div>
+  <div class="stat">
+    <div class="num">{{ lead_stats.total }}</div>
+    <div class="lbl">Leads</div>
+    <a href="/outreach" style="font-size:0.78rem; color:var(--gold); display:block; margin-top:0.4rem;">{{ lead_stats.total - lead_stats.emailed }} not yet contacted →</a>
+  </div>
   {% if new_job_emails > 0 %}
   <div class="stat" style="border-color: rgba(201,168,76,0.4);">
     <div class="num" style="color:var(--red);">{{ new_job_emails }}</div>

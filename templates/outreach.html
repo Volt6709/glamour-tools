@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Outreach — Glamour Tools{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+  <h1 style="margin-bottom:0;">Outreach</h1>
+  <a href="/outreach/add" class="btn btn-gold">+ Add Lead</a>
+</div>
+
+<!-- Stats -->
+<div class="stat-row" style="margin-bottom:1.5rem;">
+  <div class="stat"><div class="num">{{ stats.total }}</div><div class="lbl">Total Leads</div></div>
+  <div class="stat"><div class="num">{{ stats.emailed }}</div><div class="lbl">Contacted</div></div>
+  <div class="stat"><div class="num">{{ stats.responded }}</div><div class="lbl">Responded</div></div>
+  <div class="stat"><div class="num">{{ stats.converted }}</div><div class="lbl">Converted</div></div>
+</div>
+
+<!-- Filter -->
+<div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+  {% for s, label in [('','All'), ('new','New'), ('emailed','Emailed'), ('followup1','Follow-up 1'), ('followup2','Follow-up 2'), ('responded','Responded'), ('converted','Converted'), ('lost','Lost')] %}
+  <a href="/outreach{% if s %}?status={{ s }}{% endif %}"
+     class="btn btn-sm {{ 'btn-gold' if status_filter == s else 'btn-outline' }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<!-- Lead Table -->
+{% if leads %}
+<div class="card" style="padding:0;">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Firm</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      {% set status_colors = {
+        'new': 'tag-blue',
+        'emailed': 'tag-gold',
+        'followup1': 'tag-gold',
+        'followup2': 'tag-gold',
+        'responded': 'tag-green',
+        'converted': 'tag-green',
+        'lost': 'tag-red'
+      } %}
+      {% set next_action = {
+        'new': 'Send Email',
+        'emailed': 'Send Follow-up 1',
+        'followup1': 'Send Follow-up 2',
+        'followup2': None,
+        'responded': None,
+        'converted': None,
+        'lost': None
+      } %}
+      <tr>
+        <td style="font-weight:600;">{{ lead.name }}</td>
+        <td style="color:rgba(255,255,255,0.6);">{{ lead.firm or '—' }}</td>
+        <td style="font-size:0.82rem;">{{ lead.email or '—' }}</td>
+        <td style="font-size:0.82rem; color:rgba(255,255,255,0.5);">{{ lead.phone or '—' }}</td>
+        <td style="font-size:0.82rem; color:rgba(255,255,255,0.5);">{{ lead.location or '—' }}</td>
+        <td>
+          <span class="badge-tag {{ status_colors.get(lead.status, 'tag-blue') }}">
+            {{ lead.status|title }}
+          </span>
+        </td>
+        <td>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            {% if next_action.get(lead.status) and lead.email %}
+            <a href="/outreach/send/{{ lead.id }}" class="btn btn-gold btn-sm"
+               onclick="return confirm('Send {{ next_action.get(lead.status) }} to {{ lead.name }}?')">
+              {{ next_action.get(lead.status) }}
+            </a>
+            {% endif %}
+            {% if lead.status == 'emailed' or lead.status == 'followup1' or lead.status == 'followup2' %}
+            <a href="/outreach/mark/{{ lead.id }}/responded" class="btn btn-outline btn-sm">Responded</a>
+            {% endif %}
+            {% if lead.status == 'responded' %}
+            <a href="/outreach/mark/{{ lead.id }}/converted" class="btn btn-gold btn-sm">Converted</a>
+            {% endif %}
+            <a href="/outreach/mark/{{ lead.id }}/lost" class="btn btn-danger btn-sm"
+               onclick="return confirm('Mark as lost?')">Lost</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card"><p class="empty">No leads yet. <a href="/outreach/add" style="color:var(--gold);">Add your first lead.</a></p></div>
+{% endif %}
+
+{% endblock %}

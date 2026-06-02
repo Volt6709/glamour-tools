@@ -41,6 +41,22 @@ def init_db():
             estimate_id   TEXT,
             logged_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS leads (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            name            TEXT NOT NULL,
+            firm            TEXT,
+            email           TEXT,
+            phone           TEXT,
+            location        TEXT,
+            notes           TEXT,
+            status          TEXT DEFAULT 'new',
+            emailed_at      TIMESTAMP,
+            followup1_at    TIMESTAMP,
+            followup2_at    TIMESTAMP,
+            responded_at    TIMESTAMP,
+            created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     conn.commit()
     conn.close()
@@ -158,3 +174,69 @@ def get_email_log():
     rows = conn.execute("SELECT * FROM email_log ORDER BY logged_at DESC LIMIT 50").fetchall()
     conn.close()
     return rows
+
+
+# ── Lead helpers ─────────────────────────────────────────────────────────────
+
+def add_lead(name, firm, email, phone, location, notes=''):
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO leads (name, firm, email, phone, location, notes) VALUES (?,?,?,?,?,?)",
+        (name, firm, email, phone, location, notes)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_leads(status=''):
+    conn = get_db()
+    if status:
+        rows = conn.execute("SELECT * FROM leads WHERE status=? ORDER BY created_at DESC", (status,)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM leads ORDER BY created_at DESC").fetchall()
+    conn.close()
+    return rows
+
+
+def get_lead(lead_id):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM leads WHERE id=?", (lead_id,)).fetchone()
+    conn.close()
+    return row
+
+
+def update_lead_status(lead_id, status, timestamp_field=None):
+    conn = get_db()
+    if timestamp_field:
+        conn.execute(f"UPDATE leads SET status=?, {timestamp_field}=CURRENT_TIMESTAMP WHERE id=?", (status, lead_id))
+    else:
+        conn.execute("UPDATE leads SET status=? WHERE id=?", (status, lead_id))
+    conn.commit()
+    conn.close()
+
+
+def update_lead(lead_id, name, firm, email, phone, location, notes):
+    conn = get_db()
+    conn.execute(
+        "UPDATE leads SET name=?, firm=?, email=?, phone=?, location=?, notes=? WHERE id=?",
+        (name, firm, email, phone, location, notes, lead_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_lead(lead_id):
+    conn = get_db()
+    conn.execute("DELETE FROM leads WHERE id=?", (lead_id,))
+    conn.commit()
+    conn.close()
+
+
+def get_lead_stats():
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) FROM leads").fetchone()[0]
+    emailed = conn.execute("SELECT COUNT(*) FROM leads WHERE status != 'new'").fetchone()[0]
+    responded = conn.execute("SELECT COUNT(*) FROM leads WHERE status='responded'").fetchone()[0]
+    converted = conn.execute("SELECT COUNT(*) FROM leads WHERE status='converted'").fetchone()[0]
+    conn.close()
+    return {'total': total, 'emailed': emailed, 'responded': responded, 'converted': converted}

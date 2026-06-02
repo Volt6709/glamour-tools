@@ -7,6 +7,7 @@ import qb_auth
 import qb_api
 import db
 import email_reader
+import outreach
 
 load_dotenv()
 db.init_db()
@@ -72,12 +73,14 @@ def index():
         invoices, estimates = [], []
 
     stats = db.get_fabric_stats()
+    lead_stats = db.get_lead_stats()
     new_emails = sum(1 for e in email_reader.fetch_recent(10) if e.get('is_job') and 'error' not in e)
 
     return render_template('dashboard.html',
                            invoices=invoices,
                            estimates=estimates,
                            fabric_stats=stats,
+                           lead_stats=lead_stats,
                            new_job_emails=new_emails)
 
 
@@ -263,6 +266,80 @@ def fabric_detail(fabric_id):
     return render_template('fabric_detail.html', fabric=fabric, clients=clients)
 
 
+# ── Outreach ──────────────────────────────────────────────────────────────────
+
+@app.route('/outreach')
+def outreach_list():
+    status_filter = request.args.get('status', '')
+    leads = db.get_leads(status=status_filter)
+    stats = db.get_lead_stats()
+    return render_template('outreach.html', leads=leads, stats=stats, status_filter=status_filter)
+
+
+@app.route('/outreach/add', methods=['GET', 'POST'])
+def add_lead():
+    if request.method == 'POST':
+        db.add_lead(
+            name=request.form.get('name', '').strip(),
+            firm=request.form.get('firm', '').strip(),
+            email=request.form.get('email', '').strip(),
+            phone=request.form.get('phone', '').strip(),
+            location=request.form.get('location', '').strip(),
+            notes=request.form.get('notes', '').strip(),
+        )
+        flash('Lead added.', 'success')
+        return redirect(url_for('outreach_list'))
+    return render_template('add_lead.html')
+
+
+@app.route('/outreach/send/<int:lead_id>')
+def send_outreach(lead_id):
+    lead = db.get_lead(lead_id)
+    if not lead or not lead['email']:
+        flash('Lead has no email address.', 'error')
+        return redirect(url_for('outreach_list'))
+    if not outreach.is_configured():
+        flash('Add SMTP_PASSWORD to .env to enable email sending.', 'error')
+        return redirect(url_for('outreach_list'))
+
+    status = lead['status']
+    try:
+        if status == 'new':
+            outreach.send_cold_email(lead)
+            db.update_lead_status(lead_id, 'emailed', 'emailed_at')
+            flash(f"Cold email sent to {lead['name']}.", 'success')
+        elif status == 'emailed':
+            outreach.send_followup1(lead)
+            db.update_lead_status(lead_id, 'followup1', 'followup1_at')
+            flash(f"Follow-up 1 sent to {lead['name']}.", 'success')
+        elif status == 'followup1':
+            outreach.send_followup2(lead)
+            db.update_lead_status(lead_id, 'followup2', 'followup2_at')
+            flash(f"Final follow-up sent to {lead['name']}.", 'success')
+        else:
+            flash('No further emails to send for this lead.', 'error')
+    except Exception as e:
+        flash(f'Email failed: {e}', 'error')
+
+    return redirect(url_for('outreach_list'))
+
+
+@app.route('/outreach/mark/<int:lead_id>/<status>')
+def mark_lead(lead_id, status):
+    allowed = {'new', 'emailed', 'followup1', 'followup2', 'responded', 'converted', 'lost'}
+    if status in allowed:
+        db.update_lead_status(lead_id, status)
+        flash(f'Lead marked as {status}.', 'success')
+    return redirect(url_for('outreach_list'))
+
+
+@app.route('/outreach/delete/<int:lead_id>')
+def delete_lead(lead_id):
+    db.delete_lead(lead_id)
+    flash('Lead removed.', 'success')
+    return redirect(url_for('outreach_list'))
+
+
 @app.route('/static/fabric_photos/<filename>')
 def fabric_photo(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
@@ -273,4 +350,4 @@ def fabric_photo(filename):
 if __name__ == '__main__':
     print('\n  Glamour Tools is running.')
     print('  Open http://localhost:5000 in your browser.\n')
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=5001)
