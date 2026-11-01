@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glamour CAD</title>
+<style>
+/* ── reset & vars ── */
+:root {
+  --gold: #c9a84c; --gold-dim: rgba(201,168,76,0.18); --gold-dark: #9a7830;
+  --bg:   #1a1917; --dark: #141412; --dark2: #1e1d1a; --dark3: #252320;
+  --dark4: #2e2c2a; --dark5: #383532;
+  --cream: #e8e4dc; --cream2: #b0aca4; --cream3: #706c64;
+  --blue:  #3a6abf; --blue-sel: #4488ff; --blue-dim: rgba(68,136,255,0.15);
+  --red: #c0392b; --green: #4a9060;
+  --toolbar-h: 46px; --bottom-h: 34px;
+  --left-w: 168px; --right-w: 230px;
+  --font: 'Courier New', Courier, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--cream); font-family: var(--font); font-size: 12px; }
+
+/* ── shell ── */
+#shell { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+/* ── toolbar ── */
+#toolbar {
+  height: var(--toolbar-h); background: var(--dark2); flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 0; padding: 0 10px;
+}
+.tb-brand { color: var(--gold); font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding-right: 14px;
+  border-right: 1px solid rgba(255,255,255,0.08); margin-right: 10px; white-space: nowrap; }
+.tb-group { display: flex; gap: 2px; padding: 0 8px;
+  border-right: 1px solid rgba(255,255,255,0.08); }
+.tb-group:last-child { border-right: none; margin-left: auto; }
+.tb-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 42px; height: 34px; border: 1px solid transparent; border-radius: 4px;
+  background: transparent; color: var(--cream2); cursor: pointer; font-family: var(--font);
+  font-size: 9px; gap: 2px; transition: all 0.12s; user-select: none;
+}
+.tb-btn:hover { background: var(--dark4); color: var(--cream); border-color: rgba(255,255,255,0.1); }
+.tb-btn.active { background: var(--blue-dim); color: var(--blue-sel);
+  border-color: rgba(68,136,255,0.4); }
+.tb-btn .icon { font-size: 16px; line-height: 1; }
+.tb-btn .key { font-size: 8px; color: var(--cream3); }
+.tb-btn.active .key { color: var(--blue-sel); opacity: 0.7; }
+
+.view-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border: 1px solid transparent; border-radius: 4px;
+  background: transparent; color: var(--cream2); cursor: pointer; font-family: var(--font);
+  font-size: 10px; transition: all 0.12s; white-space: nowrap; user-select: none;
+}
+.view-btn:hover { background: var(--dark4); color: var(--cream); border-color: rgba(255,255,255,0.1); }
+.view-btn.active { background: var(--dark4); color: var(--gold); border-color: var(--gold-dark); }
+
+/* ── body row ── */
+#body { display: flex; flex: 1; overflow: hidden; }
+
+/* ── left panel (layers) ── */
+#left-panel {
+  width: var(--left-w); background: var(--dark2); flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.panel-title {
+  font-size: 9px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--cream3); padding: 10px 12px 6px; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.layer-list { padding: 8px 0; flex: 1; }
+.layer-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px; cursor: pointer; font-size: 11px; color: var(--cream2);
+  transition: background 0.1s; user-select: none;
+}
+.layer-item:hover { background: var(--dark4); color: var(--cream); }
+.layer-item.selected { background: var(--blue-dim); color: var(--blue-sel); }
+.layer-eye { font-size: 13px; flex-shrink: 0; }
+.layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.layer-name { flex: 1; }
+.layer-item.hidden { opacity: 0.38; }
+
+/* ── viewport ── */
+#viewport { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
+#bp-canvas { display: block; width: 100%; height: 100%; }
+
+/* viewport overlays */
+#view-label {
+  position: absolute; top: 10px; left: 10px;
+  font-size: 10px; color: rgba(255,255,255,0.28); letter-spacing: 1px;
+  text-transform: uppercase; pointer-events: none;
+}
+#coord-display {
+  position: absolute; top: 10px; right: 12px;
+  font-size: 10px; color: rgba(255,255,255,0.22); pointer-events: none;
+  text-align: right;
+}
+#hint-overlay {
+  position: absolute; bottom: 10px; right: 12px;
+  font-size: 9px; color: rgba(255,255,255,0.18); pointer-events: none;
+  text-align: right; line-height: 1.6;
+}
+#measure-line-label {
+  position: absolute; display: none;
+  background: rgba(0,0,0,0.7); color: var(--gold);
+  padding: 3px 7px; border-radius: 3px; font-size: 11px; pointer-events: none;
+}
+
+/* ── right panel (properties) ── */
+#right-panel {
+  width: var(--right-w); background: var(--dark2); flex-shrink: 0;
+  border-left: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#props-scroll { flex: 1; overflow-y: auto; padding: 10px 12px 16px; }
+#props-scroll::-webkit-scrollbar { width: 3px; }
+#props-scroll::-webkit-scrollbar-thumb { background: var(--dark5); border-radius: 2px; }
+.prop-section-title {
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 8px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--gold-dim);
+}
+.prop-row { margin-bottom: 9px; }
+.prop-label { font-size: 10px; color: var(--cream2); margin-bottom: 3px;
+  display: flex; justify-content: space-between; }
+.prop-label .prop-unit { color: var(--cream3); font-size: 9px; }
+.prop-input {
+  width: 100%; background: var(--dark3); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--cream); font-family: var(--font); font-size: 12px;
+  padding: 5px 8px; border-radius: 3px; outline: none;
+}
+.prop-input:focus { border-color: var(--blue-sel); background: var(--dark4); }
+.prop-input.active-dim { border-color: var(--gold); background: var(--dark4); }
+select.prop-input { cursor: pointer; }
+.prop-hint { font-size: 9px; color: var(--cream3); margin-top: 2px; }
+.prop-empty { font-size: 11px; color: var(--cream3); text-align: center;
+  margin-top: 30px; line-height: 1.8; }
+.prop-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 10px 0; }
+
+/* stats section */
+#stats-section { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+.stat-row { display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--cream2); margin-bottom: 4px; }
+.stat-row .stat-val { color: var(--cream); }
+.stat-row .stat-warn { color: var(--red); }
+.stat-row .stat-ok   { color: var(--green); }
+
+/* ── bottom bar ── */
+#bottom-bar {
+  height: var(--bottom-h); background: var(--dark); flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; padding: 0 12px; gap: 14px;
+}
+#tool-status { font-size: 10px; color: var(--cream3); min-width: 140px; }
+#measure-display { font-size: 10px; color: var(--cream2); min-width: 100px; }
+.mbox-label { font-size: 9px; color: var(--cream3); text-transform: uppercase;
+  letter-spacing: 1px; margin-right: 6px; }
+#mbox-wrap { display: flex; align-items: center; margin-left: auto; }
+#mbox {
+  width: 130px; background: var(--dark3); border: 1px solid rgba(255,255,255,0.15);
+  color: var(--gold); font-family: var(--font); font-size: 12px;
+  padding: 4px 8px; border-radius: 3px; outline: none; text-align: right;
+}
+#mbox:focus { border-color: var(--gold); background: var(--dark4); }
+#mbox-hint { font-size: 9px; color: var(--cream3); margin-left: 6px; }
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- ── toolbar ── -->
+  <div id="toolbar">
+    <div class="tb-brand">Glamour CAD</div>
+
+    <!-- tools -->
+    <div class="tb-group">
+      <button class="tb-btn" id="tool-select" onclick="setTool('select')" title="Select (Space)">
+        <span class="icon">↖</span><span class="key">SPACE</span>
+      </button>
+      <button class="tb-btn active" id="tool-orbit" onclick="setTool('orbit')" title="Orbit (O)">
+        <span class="icon">⟳</span><span class="key">O</span>
+      </button>
+      <button class="tb-btn" id="tool-pan" onclick="setTool('pan')" title="Pan (P)">
+        <span class="icon">✥</span><span class="key">P</span>
+      </button>
+      <button class="tb-btn" id="tool-zoom" onclick="setTool('zoom')" title="Zoom (Z)">
+        <span class="icon">⊕</span><span class="key">Z</span>
+      </button>
+      <button class="tb-btn" id="tool-measure" onclick="setTool('measure')" title="Measure (M)">
+        <span class="icon">📏</span><span class="key">M</span>
+      </button>
+    </div>
+
+    <!-- views -->
+    <div class="tb-group">
+      <button class="view-btn active" id="view-3d" onclick="setView('3d')" title="3D Perspective (3)">⬡ 3D</button>
+      <button class="view-btn" id="view-top" onclick="setView('top')" title="Top / Plan (T)">⊤ TOP</button>
+      <button class="view-btn" id="view-front" onclick="setView('front')" title="Front / Elevation (F)">▭ FRONT</button>
+      <button class="view-btn" id="view-right" onclick="setView('right')" title="Right / Side (R)">▯ RIGHT</button>
+    </div>
+
+    <!-- right actions -->
+    <div class="tb-group">
+      <button class="view-btn" onclick="fitAll()" title="Fit All (A)">⤢ FIT</button>
+      <button class="view-btn" onclick="exportPDF()" style="color:var(--gold)">⬇ PDF</button>
+    </div>
+  </div>
+
+  <!-- ── body ── -->
+  <div id="body">
+
+    <!-- left: layers -->
+    <div id="left-panel">
+      <div class="panel-title">Layers</div>
+      <div class="layer-list" id="layer-list"></div>
+    </div>
+
+    <!-- viewport -->
+    <div id="viewport">
+      <canvas id="bp-canvas"></canvas>
+      <div id="view-label">PERSPECTIVE</div>
+      <div id="coord-display"></div>
+      <div id="hint-overlay">Drag · Scroll · Right-drag to pan</div>
+      <div id="measure-line-label"></div>
+    </div>
+
+    <!-- right: properties -->
+    <div id="right-panel">
+      <div class="panel-title">Properties</div>
+      <div id="props-scroll">
+        <div class="prop-empty" id="props-empty">
+          Click an object<br>to edit its properties.
+        </div>
+        <div id="props-content" style="display:none"></div>
+      </div>
+      <div id="stats-section" id="stats-section">
+        <div class="prop-section-title" style="margin-bottom:6px;">Status</div>
+        <div class="stat-row"><span>Brackets</span><span class="stat-val" id="st-br">—</span></div>
+        <div class="stat-row"><span>Hem height</span><span class="stat-val" id="st-hem">—</span></div>
+        <div class="stat-row"><span>Bracket spacing</span><span id="st-brck">—</span></div>
+        <div class="stat-row"><span>Track coverage</span><span class="stat-val" id="st-cov">—</span></div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- ── bottom bar ── -->
+  <div id="bottom-bar">
+    <span id="tool-status">Tool: Orbit</span>
+    <span id="measure-display"></span>
+    <div id="mbox-wrap">
+      <span class="mbox-label">Measurements</span>
+      <input id="mbox" type="text" placeholder="e.g. 10  or  1-6  or  3ft"
+             autocomplete="off" spellcheck="false">
+      <span id="mbox-hint">Enter to apply</span>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- ── Three.js ── -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════ */
+const state = {
+  tool: 'orbit',
+  view: '3d',
+  selectedKey: null,
+  activeDimKey: null,        // which prop input is focused
+  measurePts: [],            // measure tool points
+  measureMeshes: [],
+};
+
+/* scene params — Boudreau Primary Bedroom (placeholders) */
+const P = {
+  rw: 14, rl: 16, rh: 9,
+  wall: 'top',
+  s_bot: 8.167, s_dep: 10, s_len: 13, s_off: 0.5,
+  hw_key: 'ripplefold',
+  mount: 'above', overhang: 1,
+  t_len: 12.5, t_off: 3, br_sp: 16,
+  sheer: true, drop: 102, panels: 4,
+  wins: [{off:1,w:3},{off:5,w:3},{off:9,w:3}],
+};
+
+/* hardware catalog */
+const HW = {
+  ripplefold:              { label:'Ripplefold',                    round:false, pw:1,    ph:0.5,  br_max:16 },
+  silent_gliss_6100:       { label:'Silent Gliss 6100 — Cord',      round:true,  pr:0.625,         br_max:20 },
+  silent_gliss_6840:       { label:'Silent Gliss 6840 — Motor',     round:false, pw:1.375,ph:1,    br_max:20 },
+  hunter_douglas_traverse: { label:'Hunter Douglas Traverse',        round:false, pw:1.5,  ph:0.75, br_max:30 },
+  graber_steel_traverse:   { label:'Graber Steel',                   round:false, pw:1.25, ph:0.625,br_max:24 },
+  lutron_platinum:         { label:'Lutron Platinum — Motor',        round:true,  pr:0.5,           br_max:18 },
+  kirsch_superfine:        { label:'Kirsch Superfine',               round:true,  pr:0.5,           br_max:28 },
+  custom:                  { label:'Custom',                         round:false, pw:1.75, ph:0.875, br_max:24 },
+};
+
+/* layer visibility */
+const LAYERS = {
+  room:    { label:'Room',     color:'#9a9590', vis:true },
+  soffit:  { label:'Soffit',   color:'#7a7570', vis:true },
+  track:   { label:'Track',    color:'#3a6abf', vis:true },
+  curtains:{ label:'Curtains', color:'#6898b8', vis:true },
+  windows: { label:'Windows',  color:'#4a88a8', vis:true },
+};
+
+/* ════════════════════════════════════════════════════
+   RENDERER + CAMERAS
+════════════════════════════════════════════════════ */
+const canvas   = document.getElementById('bp-canvas');
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1917);
+scene.fog = new THREE.FogExp2(0x1a1917, 0.018);
+
+/* perspective camera */
+const perspCam = new THREE.PerspectiveCamera(42, 1, 0.01, 500);
+perspCam.position.set(7, 10, 20);
+
+/* orthographic camera (shared, repositioned per view) */
+const orthoCam = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.01, 500);
+
+/* controls — one per camera */
+const perspCtrl = new OrbitControls(perspCam, canvas);
+perspCtrl.enableDamping = true; perspCtrl.dampingFactor = 0.07;
+
+const orthoCtrl = new OrbitControls(orthoCam, canvas);
+orthoCtrl.enableDamping = true; orthoCtrl.dampingFactor = 0.07;
+orthoCtrl.enabled = false;
+
+let activeCam  = perspCam;
+let activeCtrl = perspCtrl;
+
+/* ════════════════════════════════════════════════════
+   LIGHTING
+════════════════════════════════════════════════════ */
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
+sun.position.set(12, 22, 18); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+scene.add(new THREE.DirectionalLight(0xc8d8ff, 0.22).position.set(-8, 4, -12));
+
+/* ════════════════════════════════════════════════════
+   OBJECT GROUPS
+════════════════════════════════════════════════════ */
+const GROUPS = {};
+Object.keys(LAYERS).forEach(k => {
+  GROUPS[k] = new THREE.Group();
+  GROUPS[k].name = k;
+  scene.add(GROUPS[k]);
+});
+
+/* selection helper group */
+const selGroup = new THREE.Group();
+scene.add(selGroup);
+
+/* measure helper group */
+const measureGroup = new THREE.Group();
+scene.add(measureGroup);
+
+/* ════════════════════════════════════════════════════
+   MATERIAL FACTORY
+════════════════════════════════════════════════════ */
+function mkMat(color, opacity=1, metalness=0, roughness=0.85) {
+  return new THREE.MeshStandardMaterial({
+    color, transparent: opacity < 1, opacity, metalness, roughness,
+    side: THREE.DoubleSide,
+  });
+}
+function mkEdge(geo, color=0x666662) {
+  return new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color })
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   UNIT HELPERS
+════════════════════════════════════════════════════ */
+const i2f = v => v / 12;         // inches → feet
+const f2i = v => v * 12;         // feet → inches
+function parseDim(s) {           // "10", "1-6", "3ft", "2.5" → inches
+  s = String(s).trim().toLowerCase().replace(/"/g, '').replace(/'/g, '-');
+  if (s.endsWith('ft')) return parseFloat(s) * 12;
+  if (s.includes('-')) {
+    const [ft, inch] = s.split('-');
+    return parseFloat(ft) * 12 + (parseFloat(inch) || 0);
+  }
+  return parseFloat(s);
+}
+function fmtFt(ft) {
+  const totalIn = Math.round(ft * 12);
+  const f = Math.floor(totalIn / 12), i = totalIn % 12;
+  return i ? `${f}'-${i}"` : `${f}'-0"`;
+}
+function fmtIn(inches) {
+  const v = Math.round(inches * 4) / 4;
+  return v % 1 === 0 ? `${v}"` : `${v}"`;
+}
+
+/* ════════════════════════════════════════════════════
+   SCENE BUILDER
+════════════════════════════════════════════════════ */
+function clearGroup(key) {
+  const g = GROUPS[key];
+  while (g.children.length) {
+    const o = g.children[0];
+    o.geometry?.dispose();
+    g.remove(o);
+  }
+}
+function clearAll() { Object.keys(GROUPS).forEach(clearGroup); }
+
+function buildRoom() {
+  clearGroup('room');
+  const g = GROUPS.room;
+  const { rw, rl, rh } = P;
+  const t = 0.015;
+  const wm = mkMat(0xd0ccc6, 0.13, 0, 1);
+  const el = new THREE.LineBasicMaterial({ color: 0x4a4844 });
+
+  // floor
+  const fl = new THREE.Mesh(new THREE.BoxGeometry(rw, t, rl), mkMat(0xb8b4ae));
+  fl.position.set(rw/2, 0, rl/2); fl.receiveShadow = true;
+  g.add(fl);
+  const fe = mkEdge(fl.geometry, 0x888480); fe.position.copy(fl.position); g.add(fe);
+
+  // floor grid
+  const grid = new THREE.GridHelper(Math.max(rw,rl)*1.8, Math.round(Math.max(rw,rl)*4), 0x2e2c2a, 0x252320);
+  grid.position.set(rw/2, t, rl/2); g.add(grid);
+
+  // walls
+  [
+    [rw, rh, t,  rw/2, rh/2, 0],
+    [rw, rh, t,  rw/2, rh/2, rl],
+    [t,  rh, rl, 0,    rh/2, rl/2],
+    [t,  rh, rl, rw,   rh/2, rl/2],
+  ].forEach(([w,h,d,x,y,z]) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wm);
+    m.position.set(x,y,z); g.add(m);
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), el);
+    edges.position.copy(m.position); g.add(edges);
+  });
+
+  // ceiling
+  const cl = new THREE.Mesh(new THREE.BoxGeometry(rw, t, rl), mkMat(0xc0bdb8, 0.06));
+  cl.position.set(rw/2, rh, rl/2); g.add(cl);
+}
+
+function buildSoffit() {
+  clearGroup('soffit');
+  const g = GROUPS.soffit;
+  const { rw, rl, rh, wall, s_bot, s_dep, s_len, s_off } = P;
+  const sdF = i2f(s_dep);
+  const sH  = rh - s_bot;
+
+  let sfx, sfz, sfW, sfD;
+  if      (wall==='top')    { sfW=s_len; sfD=sdF; sfx=s_off+sfW/2; sfz=rl-sfD/2; }
+  else if (wall==='bottom') { sfW=s_len; sfD=sdF; sfx=s_off+sfW/2; sfz=sfD/2; }
+  else if (wall==='left')   { sfW=sdF; sfD=s_len; sfx=sfW/2; sfz=s_off+sfD/2; }
+  else                      { sfW=sdF; sfD=s_len; sfx=rw-sfW/2; sfz=s_off+sfD/2; }
+
+  const sm = new THREE.Mesh(new THREE.BoxGeometry(sfW, sH, sfD), mkMat(0x7a7670, 1, 0, 0.92));
+  sm.position.set(sfx, s_bot+sH/2, sfz); sm.castShadow = true; g.add(sm);
+  const se = mkEdge(sm.geometry, 0x504e4a); se.position.copy(sm.position); g.add(se);
+}
+
+function buildTrackAndBrackets() {
+  clearGroup('track');
+  const g = GROUPS.track;
+  const { rw, rl, rh, wall, s_bot, s_dep, s_len, s_off, mount, overhang,
+          t_len, t_off, br_sp, hw_key } = P;
+  const hw  = HW[hw_key] || HW.custom;
+  const sdF = i2f(s_dep);
+  const ohF = i2f(overhang);
+  const tOffF = i2f(t_off);
+  const brSpF = i2f(br_sp);
+
+  let trackAxis, trackX1, trackZ;
+  if      (wall==='top')    { trackAxis='x'; trackX1=s_off+tOffF; trackZ=rl-sdF; }
+  else if (wall==='bottom') { trackAxis='x'; trackX1=s_off+tOffF; trackZ=sdF; }
+  else if (wall==='left')   { trackAxis='z'; trackX1=sdF; trackZ=s_off+tOffF; }
+  else                      { trackAxis='z'; trackX1=rw-sdF; trackZ=s_off+tOffF; }
+
+  if (ohF > 0) {
+    if      (wall==='top')    trackZ -= ohF;
+    else if (wall==='bottom') trackZ += ohF;
+    else if (wall==='left')   trackX1 -= ohF;
+    else                      trackX1 += ohF;
+  }
+
+  const trackY  = (mount==='above') ? s_bot : (s_bot - i2f(3));
+  const trackMat = mkMat(0x2c3e6b, 1, 0.78, 0.2);
+  const brMat    = mkMat(0x2c3e6b, 1, 0.65, 0.3);
+
+  // track
+  let tm;
+  if (hw.round) {
+    const r = i2f(hw.pr || 0.625);
+    tm = new THREE.Mesh(new THREE.CylinderGeometry(r,r,t_len,16), trackMat);
+    if (trackAxis==='x') { tm.rotation.z=Math.PI/2; tm.position.set(trackX1+t_len/2,trackY,trackZ); }
+    else                 { tm.rotation.x=Math.PI/2; tm.position.set(trackX1,trackY,trackZ+t_len/2); }
+  } else {
+    const tw=i2f(hw.pw||1.75), th=i2f(hw.ph||0.875);
+    if (trackAxis==='x') {
+      tm = new THREE.Mesh(new THREE.BoxGeometry(t_len,th,tw), trackMat);
+      tm.position.set(trackX1+t_len/2, trackY-th/2, trackZ);
+    } else {
+      tm = new THREE.Mesh(new THREE.BoxGeometry(tw,th,t_len), trackMat);
+      tm.position.set(trackX1, trackY-th/2, trackZ+t_len/2);
+    }
+  }
+  tm.castShadow = true; g.add(tm);
+
+  // brackets
+  const nBr = Math.max(2, Math.round(t_len / brSpF) + 1);
+  for (let i = 0; i < nBr; i++) {
+    const frac = i / Math.max(nBr-1, 1);
+    if (mount==='above') {
+      const brH = rh - trackY;
+      const br = new THREE.Mesh(new THREE.BoxGeometry(0.035,brH,0.035), brMat);
+      if (trackAxis==='x') br.position.set(trackX1+frac*t_len, trackY+brH/2, trackZ);
+      else                 br.position.set(trackX1, trackY+brH/2, trackZ+frac*t_len);
+      g.add(br);
+      const anchor = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.018,0.12), brMat);
+      anchor.position.copy(br.position); anchor.position.y=rh-0.009; g.add(anchor);
+    } else {
+      const brH = s_bot - trackY + 0.035;
+      const br = new THREE.Mesh(new THREE.BoxGeometry(0.038,brH,0.038), brMat);
+      if (trackAxis==='x') br.position.set(trackX1+frac*t_len, s_bot-brH/2, trackZ);
+      else                 br.position.set(trackX1, s_bot-brH/2, trackZ+frac*t_len);
+      g.add(br);
+      const pl = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.018,0.12), brMat);
+      pl.position.copy(br.position); pl.position.y=s_bot-0.009; g.add(pl);
+    }
+  }
+  return { trackX1, trackZ, trackY, trackAxis, nBr };
+}
+
+function buildCurtains(trackInfo) {
+  clearGroup('curtains');
+  const g = GROUPS.curtains;
+  const { drop, panels, sheer } = P;
+  if (!trackInfo || drop<=0 || panels<=0) return;
+  const { trackX1, trackZ, trackY, trackAxis } = trackInfo;
+  const dropF = i2f(drop);
+  const panelLen = P.t_len / panels;
+  const curtY    = trackY - dropF/2;
+  const cColor   = sheer ? 0xd0dce6 : 0x8899aa;
+  const cOpacity = sheer ? 0.30     : 0.82;
+  const numFolds = sheer ? 8 : 3;
+
+  for (let i = 0; i < panels; i++) {
+    const frac = i/panels;
+    const cm_mat = mkMat(cColor, cOpacity, 0, 0.8);
+    let cm;
+    if (trackAxis==='x') {
+      cm = new THREE.Mesh(new THREE.BoxGeometry(panelLen*0.93, dropF, 0.008), cm_mat);
+      cm.position.set(trackX1+(frac+0.5/panels)*P.t_len, curtY, trackZ+0.015);
+    } else {
+      cm = new THREE.Mesh(new THREE.BoxGeometry(0.008, dropF, panelLen*0.93), cm_mat);
+      cm.position.set(trackX1+0.015, curtY, trackZ+(frac+0.5/panels)*P.t_len);
+    }
+    cm.castShadow = true; g.add(cm);
+
+    const foldMat = new THREE.LineBasicMaterial({
+      color: sheer?0x8899aa:0x506070, transparent:true, opacity:sheer?0.15:0.22
+    });
+    for (let f=1; f<numFolds; f++) {
+      const pts = [];
+      if (trackAxis==='x') {
+        const fx = trackX1+(frac+f/(numFolds*panels))*P.t_len;
+        pts.push(new THREE.Vector3(fx, trackY, trackZ+0.02));
+        pts.push(new THREE.Vector3(fx, trackY-dropF, trackZ+0.02));
+      } else {
+        const fz = trackZ+(frac+f/(numFolds*panels))*P.t_len;
+        pts.push(new THREE.Vector3(trackX1+0.02, trackY, fz));
+        pts.push(new THREE.Vector3(trackX1+0.02, trackY-dropF, fz));
+      }
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), foldMat));
+    }
+  }
+}
+
+function buildWindows() {
+  clearGroup('windows');
+  const g = GROUPS.windows;
+  const { rw, rl, rh, wall } = P;
+  const wm = mkMat(0x5898c0, 0.42);
+  const we = new THREE.LineBasicMaterial({ color: 0x3070a0 });
+  const wt = 0.022, wh = rh*0.42, wy = rh*0.42;
+  P.wins.forEach(win => {
+    let mesh;
+    if      (wall==='top')    { mesh = new THREE.Mesh(new THREE.BoxGeometry(win.w,wh,wt),wm); mesh.position.set(win.off+win.w/2,wy,rl); }
+    else if (wall==='bottom') { mesh = new THREE.Mesh(new THREE.BoxGeometry(win.w,wh,wt),wm); mesh.position.set(win.off+win.w/2,wy,0); }
+    else if (wall==='left')   { mesh = new THREE.Mesh(new THREE.BoxGeometry(wt,wh,win.w),wm); mesh.position.set(0,wy,win.off+win.w/2); }
+    else                      { mesh = new THREE.Mesh(new THREE.BoxGeometry(wt,wh,win.w),wm); mesh.position.set(rw,wy,win.off+win.w/2); }
+    g.add(mesh);
+    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), we);
+    edge.position.copy(mesh.position); g.add(edge);
+  });
+}
+
+function rebuildAll() {
+  buildRoom();
+  buildSoffit();
+  const ti = buildTrackAndBrackets();
+  buildCurtains(ti);
+  buildWindows();
+  applyLayerVisibility();
+  updateSelectionBox();
+  updateStatusBar();
+}
+
+/* ════════════════════════════════════════════════════
+   LAYER VISIBILITY
+════════════════════════════════════════════════════ */
+function applyLayerVisibility() {
+  Object.entries(LAYERS).forEach(([k,l]) => { GROUPS[k].visible = l.vis; });
+}
+
+function buildLayerPanel() {
+  const el = document.getElementById('layer-list');
+  el.innerHTML = '';
+  Object.entries(LAYERS).forEach(([key, layer]) => {
+    const item = document.createElement('div');
+    item.className = `layer-item${!layer.vis ? ' hidden' : ''}${state.selectedKey===key ? ' selected' : ''}`;
+    item.id = `layer-${key}`;
+    item.innerHTML = `
+      <span class="layer-eye" title="Toggle visibility">${layer.vis ? '👁' : '🚫'}</span>
+      <span class="layer-dot" style="background:${layer.color}"></span>
+      <span class="layer-name">${layer.label}</span>`;
+    item.addEventListener('click', (e) => {
+      if (e.target.classList.contains('layer-eye')) {
+        layer.vis = !layer.vis;
+        applyLayerVisibility();
+        buildLayerPanel();
+      } else {
+        selectObject(key);
+      }
+    });
+    el.appendChild(item);
+  });
+}
+
+/* ════════════════════════════════════════════════════
+   SELECTION SYSTEM
+════════════════════════════════════════════════════ */
+const raycaster = new THREE.Raycaster();
+const mouse     = new THREE.Vector2();
+
+function getSelectableMeshes() {
+  const out = [];
+  Object.entries(GROUPS).forEach(([key, grp]) => {
+    if (!LAYERS[key]?.vis) return;
+    grp.traverse(obj => {
+      if (obj.isMesh) { obj.userData.groupKey = key; out.push(obj); }
+    });
+  });
+  return out;
+}
+
+function selectObject(key) {
+  state.selectedKey = key;
+  updateSelectionBox();
+  buildPropsPanel(key);
+  buildLayerPanel();
+  // update layer items
+  document.querySelectorAll('.layer-item').forEach(el => {
+    el.classList.toggle('selected', el.id === `layer-${key}`);
+  });
+}
+
+function clearSelection() {
+  state.selectedKey = null;
+  state.activeDimKey = null;
+  updateSelectionBox();
+  buildPropsPanel(null);
+  document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('selected'));
+}
+
+function updateSelectionBox() {
+  while (selGroup.children.length) selGroup.remove(selGroup.children[0]);
+  if (!state.selectedKey) return;
+  const grp = GROUPS[state.selectedKey];
+  if (!grp || !grp.visible) return;
+  const box = new THREE.Box3().setFromObject(grp);
+  if (!box.isEmpty()) {
+    const helper = new THREE.Box3Helper(box, 0x4488ff);
+    helper.material.linewidth = 2;
+    selGroup.add(helper);
+  }
+}
+
+/* click → select */
+canvas.addEventListener('mousedown', onCanvasMouseDown);
+let mouseDownPos = { x: 0, y: 0 };
+canvas.addEventListener('pointerdown', e => { mouseDownPos = { x: e.clientX, y: e.clientY }; });
+
+function onCanvasMouseDown(e) {
+  if (state.tool !== 'select') return;
+}
+canvas.addEventListener('pointerup', e => {
+  const dx = Math.abs(e.clientX - mouseDownPos.x);
+  const dy = Math.abs(e.clientY - mouseDownPos.y);
+  if (dx > 5 || dy > 5) return; // was a drag, not a click
+
+  if (state.tool === 'select') {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+    mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, activeCam);
+    const hits = raycaster.intersectObjects(getSelectableMeshes(), false);
+    if (hits.length > 0) {
+      selectObject(hits[0].object.userData.groupKey);
+    } else {
+      clearSelection();
+    }
+  } else if (state.tool === 'measure') {
+    handleMeasureClick(e);
+  }
+});
+
+/* ════════════════════════════════════════════════════
+   PROPERTIES PANEL
+════════════════════════════════════════════════════ */
+const PROPS_DEF = {
+  room: {
+    title: 'Room',
+    fields: [
+      { key:'rw',    label:'Width',         unit:'ft',  min:6,   max:40,  step:0.083, toDisplay: v=>fmtFt(v),       fromInput: v=>parseDim(v)/12 },
+      { key:'rl',    label:'Length / Depth',unit:'ft',  min:6,   max:40,  step:0.083, toDisplay: v=>fmtFt(v),       fromInput: v=>parseDim(v)/12 },
+      { key:'rh',    label:'Ceiling Height',unit:'ft',  min:6,   max:16,  step:0.083, toDisplay: v=>fmtFt(v),       fromInput: v=>parseDim(v)/12 },
+    ]
+  },
+  soffit: {
+    title: 'Soffit',
+    fields: [
+      { key:'wall',   label:'Attached Wall', unit:'',   select: [{v:'top',l:'Top (back)'},{v:'bottom',l:'Bottom (front)'},{v:'left',l:'Left'},{v:'right',l:'Right'}] },
+      { key:'s_bot',  label:'Bottom from Floor',unit:'ft',min:4, max:13, step:0.083, toDisplay:v=>fmtFt(v), fromInput:v=>parseDim(v)/12 },
+      { key:'s_dep',  label:'Depth',         unit:'in',  min:4, max:36,  step:0.25,  toDisplay:v=>fmtIn(v), fromInput:v=>parseDim(v) },
+      { key:'s_len',  label:'Length',        unit:'ft',  min:1, max:40,  step:0.083, toDisplay:v=>fmtFt(v), fromInput:v=>parseDim(v)/12 },
+      { key:'s_off',  label:'Offset from edge',unit:'ft',min:0, max:20,  step:0.083, toDisplay:v=>fmtFt(v), fromInput:v=>parseDim(v)/12 },
+    ]
+  },
+  track: {
+    title: 'Track & Hardware',
+    fields: [
+      { key:'hw_key',  label:'Track System',  unit:'',   select: Object.entries(HW).map(([v,h])=>({v,l:h.label})) },
+      { key:'mount',   label:'Mount Style',   unit:'',   select: [{v:'above',l:'Above soffit'},{v:'below',l:'Below soffit face'}] },
+      { key:'overhang',label:'Overhang past face',unit:'in',min:0,max:4,step:0.25, toDisplay:v=>fmtIn(v), fromInput:v=>parseDim(v) },
+      { key:'t_len',   label:'Track Length',  unit:'ft',  min:1, max:40,  step:0.083, toDisplay:v=>fmtFt(v), fromInput:v=>parseDim(v)/12 },
+      { key:'t_off',   label:'Track Offset',  unit:'in',  min:0, max:36,  step:0.25,  toDisplay:v=>fmtIn(v), fromInput:v=>parseDim(v) },
+      { key:'br_sp',   label:'Bracket Spacing',unit:'in', min:8, max:36,  step:1,     toDisplay:v=>fmtIn(v), fromInput:v=>parseDim(v) },
+    ]
+  },
+  curtains: {
+    title: 'Curtains',
+    fields: [
+      { key:'sheer',   label:'Sheer / Unlined',unit:'',   checkbox: true },
+      { key:'drop',    label:'Drop Length',    unit:'in',  min:24,max:168,step:0.5, toDisplay:v=>fmtIn(v), fromInput:v=>parseDim(v) },
+      { key:'panels',  label:'Panel Count',    unit:'',    min:1, max:16, step:1,   toDisplay:v=>v,         fromInput:v=>parseInt(v) },
+    ]
+  },
+  windows: {
+    title: 'Windows (on soffit wall)',
+    fields: [] // generated dynamically
+  },
+};
+
+function buildPropsPanel(key) {
+  const empty   = document.getElementById('props-empty');
+  const content = document.getElementById('props-content');
+  if (!key) {
+    empty.style.display = ''; content.style.display = 'none'; return;
+  }
+  empty.style.display = 'none'; content.style.display = '';
+  const def = PROPS_DEF[key];
+  if (!def) { content.innerHTML = ''; return; }
+
+  let html = `<div class="prop-section-title">${def.title}</div>`;
+
+  const fields = key === 'windows' ? buildWindowFields() : def.fields;
+
+  fields.forEach(field => {
+    html += `<div class="prop-row">`;
+    html += `<div class="prop-label">${field.label}<span class="prop-unit">${field.unit}</span></div>`;
+
+    if (field.select) {
+      const cur = P[field.key];
+      html += `<select class="prop-input" data-key="${field.key}">`;
+      field.select.forEach(opt => {
+        html += `<option value="${opt.v}"${cur===opt.v?' selected':''}>${opt.l}</option>`;
+      });
+      html += `</select>`;
+    } else if (field.checkbox) {
+      const checked = P[field.key] ? 'checked' : '';
+      html += `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" class="prop-check" data-key="${field.key}" ${checked}
+               style="accent-color:var(--gold);width:14px;height:14px;">
+        <span style="font-size:11px;color:var(--cream2)">${P[field.key]?'On':'Off'}</span>
+      </label>`;
+    } else if (field.winOff !== undefined) {
+      const val = P.wins[field.winIdx]?.[field.winOff !== undefined ? 'off' : 'w'];
+      html += `<input type="text" class="prop-input prop-win" data-winidx="${field.winIdx}" data-winprop="${field.winOff!==undefined?'off':'w'}"
+        value="${field.toDisplay(val)}" autocomplete="off">`;
+    } else {
+      const val = field.toDisplay(P[field.key]);
+      html += `<input type="text" class="prop-input" data-key="${field.key}"
+        value="${val}" autocomplete="off" spellcheck="false">`;
+      if (field.hint) html += `<div class="prop-hint">${field.hint}</div>`;
+    }
+    html += `</div>`;
+  });
+
+  content.innerHTML = html;
+
+  // wire inputs
+  content.querySelectorAll('.prop-input[data-key]').forEach(el => {
+    const field = fields.find(f => f.key === el.dataset.key);
+    if (!field) return;
+    el.addEventListener('focus', () => {
+      state.activeDimKey = el.dataset.key;
+      document.getElementById('mbox').placeholder = `e.g. ${el.value}`;
+    });
+    el.addEventListener('blur', () => { applyPropInput(el, field); });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { applyPropInput(el, field); el.blur(); }
+      if (e.key === 'Tab')   { applyPropInput(el, field); }
+    });
+    if (el.tagName === 'SELECT') {
+      el.addEventListener('change', () => { applyPropInput(el, field); });
+    }
+  });
+  content.querySelectorAll('.prop-check').forEach(el => {
+    el.addEventListener('change', () => {
+      P[el.dataset.key] = el.checked;
+      rebuildAll();
+    });
+  });
+  // window inputs
+  content.querySelectorAll('.prop-win').forEach(el => {
+    el.addEventListener('blur', () => applyWinInput(el));
+    el.addEventListener('keydown', e => { if (e.key==='Enter') applyWinInput(el); });
+  });
+}
+
+function buildWindowFields() {
+  const fields = [];
+  P.wins.forEach((win, i) => {
+    fields.push({ key:`_wo${i}`, label:`Window ${i+1} offset`, unit:'ft',
+      toDisplay:v=>fmtFt(v), fromInput:v=>parseDim(v)/12,
+      winIdx:i, winOff:true });
+    fields.push({ key:`_ww${i}`, label:`Window ${i+1} width`, unit:'ft',
+      toDisplay:v=>fmtFt(v), fromInput:v=>parseDim(v)/12,
+      winIdx:i, winOff:false });
+  });
+  return fields;
+}
+
+function applyPropInput(el, field) {
+  if (field.select) {
+    P[field.key] = el.value;
+  } else if (field.fromInput) {
+    const v = field.fromInput(el.value);
+    if (!isNaN(v) && v > 0) { P[field.key] = v; }
+    el.value = field.toDisplay(P[field.key]);
+  }
+  rebuildAll();
+  buildPropsPanel(state.selectedKey);
+}
+
+function applyWinInput(el) {
+  const idx  = parseInt(el.dataset.winidx);
+  const prop = el.dataset.winprop;
+  const v    = parseDim(el.value) / 12;
+  if (!isNaN(v) && v > 0) {
+    if (!P.wins[idx]) P.wins[idx] = { off: 0, w: 3 };
+    P.wins[idx][prop] = v;
+    rebuildAll();
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   STATUS BAR
+════════════════════════════════════════════════════ */
+function updateStatusBar() {
+  const hw   = HW[P.hw_key] || HW.custom;
+  const nBr  = Math.max(2, Math.round(P.t_len / i2f(P.br_sp)) + 1);
+  const tY   = (P.mount==='above') ? P.s_bot : (P.s_bot - i2f(3));
+  const hemH = (tY - i2f(P.drop)) * 12;
+  const cov  = ((P.t_len / P.s_len) * 100).toFixed(0);
+
+  document.getElementById('st-br').textContent   = `${nBr} brackets`;
+  document.getElementById('st-hem').textContent  = `${hemH.toFixed(1)}" from floor`;
+  document.getElementById('st-cov').textContent  = `${cov}% of soffit`;
+
+  const brEl = document.getElementById('st-brck');
+  if (P.br_sp > hw.br_max) {
+    brEl.innerHTML = `<span class="stat-warn">⚠ ${P.br_sp}" > max ${hw.br_max}"</span>`;
+  } else {
+    brEl.innerHTML = `<span class="stat-ok">✓ ${P.br_sp}" / ${hw.br_max}" max</span>`;
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   TOOL SYSTEM
+════════════════════════════════════════════════════ */
+const TOOL_META = {
+  select:  { label:'Select',  cursor:'default',     hint:'Click objects to select · Esc to deselect' },
+  orbit:   { label:'Orbit',   cursor:'grab',        hint:'Drag to orbit · Scroll to zoom · Right-drag to pan' },
+  pan:     { label:'Pan',     cursor:'move',        hint:'Drag to pan · Scroll to zoom' },
+  zoom:    { label:'Zoom',    cursor:'zoom-in',     hint:'Scroll or drag to zoom' },
+  measure: { label:'Measure', cursor:'crosshair',   hint:'Click 2 points to measure distance · Esc to clear' },
+};
+
+function setTool(tool) {
+  state.tool = tool;
+  // update toolbar buttons
+  document.querySelectorAll('[id^="tool-"]').forEach(el => {
+    el.classList.toggle('active', el.id === `tool-${tool}`);
+  });
+  // cursor
+  canvas.style.cursor = TOOL_META[tool]?.cursor || 'default';
+  document.getElementById('tool-status').textContent = `Tool: ${TOOL_META[tool]?.label}`;
+  document.getElementById('hint-overlay').textContent = TOOL_META[tool]?.hint || '';
+
+  // orbit control
+  perspCtrl.enabled = (tool === 'orbit' || tool === 'zoom');
+  orthoCtrl.enabled = (tool === 'orbit' || tool === 'pan' || tool === 'zoom');
+
+  if (tool === 'pan') {
+    perspCtrl.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+    perspCtrl.enabled = true;
+  } else {
+    perspCtrl.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+  }
+
+  if (tool !== 'measure') clearMeasure();
+}
+window.setTool = setTool;
+
+/* ════════════════════════════════════════════════════
+   VIEW SYSTEM
+════════════════════════════════════════════════════ */
+const VIEW_META = {
+  '3d':    { label:'PERSPECTIVE' },
+  'top':   { label:'TOP / PLAN' },
+  'front': { label:'FRONT / ELEVATION' },
+  'right': { label:'RIGHT / SIDE' },
+};
+
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll('.view-btn').forEach(el => {
+    el.classList.toggle('active', el.id === `view-${v}`);
+  });
+  document.getElementById('view-label').textContent = VIEW_META[v]?.label || v.toUpperCase();
+
+  if (v === '3d') {
+    activeCam  = perspCam;
+    activeCtrl = perspCtrl;
+    perspCtrl.enabled = true;
+    orthoCtrl.enabled = false;
+    scene.fog = new THREE.FogExp2(0x1a1917, 0.018);
+  } else {
+    activeCam  = orthoCam;
+    activeCtrl = orthoCtrl;
+    perspCtrl.enabled = false;
+    orthoCtrl.enabled = true;
+    scene.fog = null;
+    positionOrthoCamera(v);
+  }
+  updateOrthoSize();
+}
+window.setView = setView;
+
+function positionOrthoCamera(v) {
+  const { rw, rl, rh } = P;
+  orthoCtrl.enableRotate = false;
+  orthoCtrl.enablePan    = true;
+  if (v === 'top') {
+    orthoCam.position.set(rw/2, 50, rl/2);
+    orthoCam.up.set(0, 0, -1);
+    orthoCtrl.target.set(rw/2, 0, rl/2);
+  } else if (v === 'front') {
+    orthoCam.position.set(rw/2, rh/2, -50);
+    orthoCam.up.set(0, 1, 0);
+    orthoCtrl.target.set(rw/2, rh/2, rl/2);
+  } else if (v === 'right') {
+    orthoCam.position.set(100, rh/2, rl/2);
+    orthoCam.up.set(0, 1, 0);
+    orthoCtrl.target.set(0, rh/2, rl/2);
+  }
+  orthoCam.lookAt(orthoCtrl.target);
+  orthoCtrl.update();
+}
+
+function updateOrthoSize() {
+  if (state.view === '3d') return;
+  const { rw, rl, rh } = P;
+  const aspect = viewport.clientWidth / viewport.clientHeight;
+  const d = Math.max(rw, rl, rh) * 0.75;
+  orthoCam.left   = -d * aspect;
+  orthoCam.right  =  d * aspect;
+  orthoCam.top    =  d;
+  orthoCam.bottom = -d;
+  orthoCam.updateProjectionMatrix();
+}
+
+function fitAll() {
+  const box = new THREE.Box3();
+  Object.values(GROUPS).forEach(g => box.expandByObject(g));
+  if (box.isEmpty()) return;
+  const center = new THREE.Vector3();
+  const size   = new THREE.Vector3();
+  box.getCenter(center); box.getSize(size);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  if (state.view === '3d') {
+    const fov    = perspCam.fov * Math.PI / 180;
+    const dist   = (maxDim / 2) / Math.tan(fov / 2) * 1.5;
+    perspCam.position.set(center.x + dist*0.4, center.y + dist*0.6, center.z + dist);
+    perspCtrl.target.copy(center);
+    perspCtrl.update();
+  } else {
+    positionOrthoCamera(state.view);
+    updateOrthoSize();
+  }
+}
+window.fitAll = fitAll;
+
+/* ════════════════════════════════════════════════════
+   MEASURE TOOL
+════════════════════════════════════════════════════ */
+function handleMeasureClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, activeCam);
+
+  // intersect floor plane
+  const floor = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+  const pt = new THREE.Vector3();
+  raycaster.ray.intersectPlane(floor, pt);
+  if (!pt) return;
+
+  state.measurePts.push(pt.clone());
+  // draw point marker
+  const dotGeo = new THREE.SphereGeometry(0.06, 8, 8);
+  const dot = new THREE.Mesh(dotGeo, mkMat(0xffcc00, 1, 0, 0.4));
+  dot.position.copy(pt); measureGroup.add(dot);
+
+  if (state.measurePts.length === 2) {
+    const [a, b] = state.measurePts;
+    const distFt = a.distanceTo(b);
+    const distIn = distFt * 12;
+    const label  = `${fmtFt(distFt)}  (${distIn.toFixed(1)}")`;
+    document.getElementById('measure-display').textContent = `⟷ ${label}`;
+    document.getElementById('mbox').value = label;
+    // draw line
+    const geo = new THREE.BufferGeometry().setFromPoints([a, b]);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xffcc00 }));
+    measureGroup.add(line);
+    state.measurePts = [];
+  } else {
+    document.getElementById('measure-display').textContent = `Pick 2nd point…`;
+  }
+}
+
+function clearMeasure() {
+  state.measurePts = [];
+  while (measureGroup.children.length) measureGroup.remove(measureGroup.children[0]);
+  document.getElementById('measure-display').textContent = '';
+}
+
+/* ════════════════════════════════════════════════════
+   MEASUREMENT INPUT BOX (SketchUp-style)
+════════════════════════════════════════════════════ */
+const mbox = document.getElementById('mbox');
+mbox.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const raw = mbox.value.trim();
+  if (!raw) return;
+  const v = parseDim(raw);
+  if (isNaN(v) || v <= 0) return;
+
+  // apply to focused prop input if any
+  const focused = document.querySelector('.prop-input:focus');
+  if (focused && focused.dataset.key) {
+    const key   = focused.dataset.key;
+    const allFields = Object.values(PROPS_DEF).flatMap(d => d.fields);
+    const field = allFields.find(f => f.key === key);
+    if (field?.fromInput) {
+      P[key] = field.fromInput(v);
+      rebuildAll();
+      buildPropsPanel(state.selectedKey);
+    }
+  } else if (state.activeDimKey) {
+    // apply to last focused dimension
+    const allFields = Object.values(PROPS_DEF).flatMap(d => d.fields);
+    const field = allFields.find(f => f.key === state.activeDimKey);
+    if (field?.fromInput) {
+      P[state.activeDimKey] = field.fromInput(v);
+      rebuildAll();
+      buildPropsPanel(state.selectedKey);
+    }
+  }
+  mbox.value = '';
+});
+
+/* ════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════════════════════════ */
+window.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  switch (e.key.toLowerCase()) {
+    case ' ':          e.preventDefault(); setTool('select'); break;
+    case 'o':          setTool('orbit');   break;
+    case 'p':          setTool('pan');     break;
+    case 'z':          setTool('zoom');    break;
+    case 'm':          setTool('measure'); break;
+    case '3':          setView('3d');      break;
+    case 't':          setView('top');     break;
+    case 'f':          setView('front');   break;
+    case 'r':          setView('right');   break;
+    case 'a':          fitAll();           break;
+    case 'escape':
+      clearSelection();
+      clearMeasure();
+      if (state.tool==='measure') setTool('orbit');
+      break;
+    case 'delete':
+    case 'backspace':
+      if (state.tool==='measure') clearMeasure();
+      break;
+  }
+});
+
+/* number keys start measure input focus */
+window.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  if (/^[0-9.]$/.test(e.key)) {
+    mbox.focus();
+    mbox.value = e.key;
+  }
+});
+
+/* ════════════════════════════════════════════════════
+   MOUSE COORDINATE DISPLAY
+════════════════════════════════════════════════════ */
+const coordPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, activeCam);
+  const pt = new THREE.Vector3();
+  raycaster.ray.intersectPlane(coordPlane, pt);
+  if (pt) {
+    document.getElementById('coord-display').textContent =
+      `X ${fmtFt(pt.x)}  Y ${fmtFt(pt.z)}`;
+  }
+});
+
+/* ════════════════════════════════════════════════════
+   PDF EXPORT
+════════════════════════════════════════════════════ */
+window.exportPDF = function() {
+  alert('Run from terminal:\npython3 blueprint.py boudreau_bedroom.json --pdf');
+};
+
+/* ════════════════════════════════════════════════════
+   RESIZE
+════════════════════════════════════════════════════ */
+function resize() {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  renderer.setSize(w, h);
+  perspCam.aspect = w / h;
+  perspCam.updateProjectionMatrix();
+  updateOrthoSize();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ════════════════════════════════════════════════════
+   ANIMATION LOOP
+════════════════════════════════════════════════════ */
+(function loop() {
+  requestAnimationFrame(loop);
+  activeCtrl.update();
+  renderer.render(scene, activeCam);
+})();
+
+/* ════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════ */
+rebuildAll();
+buildLayerPanel();
+setTool('orbit');
+setView('3d');
+
+// default camera
+perspCam.position.set(P.rw*0.4, P.rh*1.1, P.rl*2.1);
+perspCtrl.target.set(P.rw/2, P.rh/2, P.rl/2);
+perspCtrl.update();
+
+</script>
+</body>
+</html>

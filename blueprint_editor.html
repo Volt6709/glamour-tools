@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blueprint Editor — Glamour Upholstery</title>
+<style>
+  :root {
+    --gold: #c9a84c; --gold-dim: rgba(201,168,76,0.15);
+    --dark: #141412; --dark2: #1e1d1a; --dark3: #2a2927; --dark4: #333230;
+    --cream: #f7f2ea; --cream2: #ccc8c0;
+    --blue: #2c3e6b; --blue-bright: #4a7abf;
+    --red: #c0392b; --green: #52a070;
+    --font: 'Courier New', Courier, monospace;
+    --sidebar: 300px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--dark); color: var(--cream); font-family: var(--font); }
+
+  /* ── layout ── */
+  #app { display: flex; flex-direction: column; height: 100%; }
+
+  #topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--dark2); border-bottom: 1px solid var(--gold-dim);
+    padding: 0 16px; height: 46px; flex-shrink: 0;
+  }
+  #topbar .brand { color: var(--gold); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; }
+  #topbar .project { font-size: 11px; color: var(--cream2); }
+  #topbar .actions { display: flex; gap: 8px; }
+
+  #main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── sidebar ── */
+  #sidebar {
+    width: var(--sidebar); background: var(--dark2);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  }
+  #sidebar-scroll { flex: 1; overflow-y: auto; padding: 12px 14px 20px; }
+  #sidebar-scroll::-webkit-scrollbar { width: 4px; }
+  #sidebar-scroll::-webkit-scrollbar-thumb { background: var(--dark4); border-radius: 2px; }
+
+  .section { margin-bottom: 16px; }
+  .section-title {
+    font-size: 9px; font-weight: bold; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 8px;
+    padding-bottom: 4px; border-bottom: 1px solid var(--gold-dim);
+  }
+  .ctrl-row { margin-bottom: 8px; }
+  .ctrl-label {
+    font-size: 10px; color: var(--cream2); margin-bottom: 3px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ctrl-label span.val {
+    color: var(--gold); font-size: 11px; min-width: 48px; text-align: right;
+  }
+  input[type=range] {
+    width: 100%; height: 3px; appearance: none; background: var(--dark4);
+    border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 13px; height: 13px;
+    border-radius: 50%; background: var(--gold); cursor: pointer;
+  }
+  select, input[type=text], input[type=number] {
+    width: 100%; background: var(--dark3); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--cream); font-family: var(--font); font-size: 11px;
+    padding: 5px 7px; border-radius: 3px; outline: none;
+  }
+  select:focus, input:focus { border-color: var(--gold); }
+  select option { background: var(--dark3); }
+
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .toggle-label { font-size: 10px; color: var(--cream2); }
+  .toggle {
+    position: relative; width: 32px; height: 17px; cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: var(--dark4); border-radius: 9px;
+    transition: background 0.2s;
+  }
+  .toggle-slider:before {
+    content: ''; position: absolute; width: 13px; height: 13px;
+    left: 2px; top: 2px; background: var(--cream2); border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--gold); }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(15px); }
+
+  /* status bar */
+  #statusbar {
+    background: var(--dark3); border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 8px 14px; font-size: 10px; color: var(--cream2); flex-shrink: 0;
+  }
+  #statusbar .stat { margin-bottom: 2px; display: flex; justify-content: space-between; }
+  #statusbar .stat .warn { color: var(--red); }
+  #statusbar .stat .ok   { color: var(--green); }
+
+  /* ── canvas ── */
+  #canvas-wrap {
+    flex: 1; background: #1a1917; position: relative; overflow: hidden;
+  }
+  #bp-canvas { display: block; width: 100%; height: 100%; }
+
+  /* ── hint overlay ── */
+  #hint {
+    position: absolute; bottom: 10px; right: 12px;
+    font-size: 9px; color: rgba(255,255,255,0.25); text-align: right;
+    pointer-events: none; letter-spacing: 0.5px;
+  }
+
+  /* ── buttons ── */
+  .btn {
+    padding: 5px 12px; font-family: var(--font); font-size: 10px;
+    border: none; border-radius: 3px; cursor: pointer;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .btn-gold { background: var(--gold); color: var(--dark); font-weight: bold; }
+  .btn-gold:hover { opacity: 0.85; }
+  .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+  .btn-outline:hover { background: var(--gold-dim); }
+
+  /* window rows */
+  .win-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- top bar -->
+  <div id="topbar">
+    <div>
+      <div class="brand">Glamour Upholstery — Blueprint Editor</div>
+      <div class="project" id="project-label">Alex Boudreau · Primary Bedroom · E18</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="resetCamera()">Reset View</button>
+      <button class="btn btn-gold" onclick="openBlueprintPDF()">Full Blueprint ↗</button>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <!-- sidebar -->
+    <div id="sidebar">
+      <div id="sidebar-scroll">
+
+        <!-- Project -->
+        <div class="section">
+          <div class="section-title">Project</div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Client</div>
+            <input type="text" id="client" value="Alex Boudreau">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Room</div>
+            <input type="text" id="room" value="Primary Bedroom · E18">
+          </div>
+        </div>
+
+        <!-- Room -->
+        <div class="section">
+          <div class="section-title">Room</div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Width (ft) <span class="val" id="v-rw">14</span></div>
+            <input type="range" class="ctrl" id="rw" min="8" max="30" step="0.5" value="14">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Length (ft) <span class="val" id="v-rl">16</span></div>
+            <input type="range" class="ctrl" id="rl" min="8" max="30" step="0.5" value="16">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Ceiling Height (ft) <span class="val" id="v-rh">9</span></div>
+            <input type="range" class="ctrl" id="rh" min="7" max="14" step="0.25" value="9">
+          </div>
+        </div>
+
+        <!-- Soffit -->
+        <div class="section">
+          <div class="section-title">Soffit</div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Wall</div>
+            <select class="ctrl" id="s-wall">
+              <option value="top" selected>Top (back wall)</option>
+              <option value="bottom">Bottom (front wall)</option>
+              <option value="left">Left wall</option>
+              <option value="right">Right wall</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Bottom from Floor (ft) <span class="val" id="v-sbot">8.17</span></div>
+            <input type="range" class="ctrl" id="s-bot" min="5" max="13" step="0.083" value="8.167">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Depth — in" <span class="val" id="v-sdep">10"</span></div>
+            <input type="range" class="ctrl" id="s-dep" min="4" max="24" step="0.5" value="10">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Length (ft) <span class="val" id="v-slen">13</span></div>
+            <input type="range" class="ctrl" id="s-len" min="1" max="30" step="0.5" value="13">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Offset from wall edge (ft) <span class="val" id="v-soff">0.5</span></div>
+            <input type="range" class="ctrl" id="s-off" min="0" max="10" step="0.25" value="0.5">
+          </div>
+        </div>
+
+        <!-- Track -->
+        <div class="section">
+          <div class="section-title">Track &amp; Hardware</div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Track System</div>
+            <select class="ctrl" id="hw-key">
+              <option value="ripplefold" selected>Ripplefold Track</option>
+              <option value="silent_gliss_6100">Silent Gliss 6100 — Cord</option>
+              <option value="silent_gliss_6840">Silent Gliss 6840 — Motor</option>
+              <option value="hunter_douglas_traverse">Hunter Douglas Traverse</option>
+              <option value="graber_steel_traverse">Graber Steel Traverse</option>
+              <option value="lutron_platinum">Lutron Platinum — Motor</option>
+              <option value="kirsch_superfine">Kirsch Superfine Rod</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Mount Style</div>
+            <select class="ctrl" id="mount">
+              <option value="above" selected>Above soffit (1" overhang)</option>
+              <option value="below">Below soffit face</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Overhang past soffit face — in" <span class="val" id="v-ovhg">1"</span></div>
+            <input type="range" class="ctrl" id="overhang" min="0" max="4" step="0.25" value="1">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Track Length (ft) <span class="val" id="v-tlen">12.5</span></div>
+            <input type="range" class="ctrl" id="t-len" min="1" max="30" step="0.5" value="12.5">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Track Offset from soffit start (in") <span class="val" id="v-toff">3"</span></div>
+            <input type="range" class="ctrl" id="t-off" min="0" max="24" step="0.5" value="3">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Bracket Spacing (in") <span class="val" id="v-brsp">16"</span></div>
+            <input type="range" class="ctrl" id="br-sp" min="8" max="36" step="1" value="16">
+          </div>
+        </div>
+
+        <!-- Curtains -->
+        <div class="section">
+          <div class="section-title">Curtains</div>
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" class="ctrl" id="sheer" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Sheer / Unlined</span>
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Drop (in") <span class="val" id="v-drop">102"</span></div>
+            <input type="range" class="ctrl" id="drop" min="24" max="144" step="1" value="102">
+          </div>
+          <div class="ctrl-row">
+            <div class="ctrl-label">Panels <span class="val" id="v-panels">4</span></div>
+            <input type="range" class="ctrl" id="panels" min="1" max="12" step="1" value="4">
+          </div>
+        </div>
+
+        <!-- Windows -->
+        <div class="section">
+          <div class="section-title">Windows (on soffit wall)</div>
+          <div style="font-size:9px;color:var(--cream2);margin-bottom:8px;">Offset · Width (both in feet)</div>
+          <div id="windows-container">
+            <div class="win-row" data-win="0">
+              <div class="ctrl-row" style="margin:0">
+                <div class="ctrl-label">W1 offset <span class="val" id="v-wo0">1</span></div>
+                <input type="range" class="ctrl win-off" data-win="0" min="0" max="28" step="0.5" value="1">
+              </div>
+              <div class="ctrl-row" style="margin:0">
+                <div class="ctrl-label">width <span class="val" id="v-ww0">3</span></div>
+                <input type="range" class="ctrl win-wid" data-win="0" min="1" max="10" step="0.25" value="3">
+              </div>
+            </div>
+            <div class="win-row" data-win="1">
+              <div class="ctrl-row" style="margin:0">
+                <div class="ctrl-label">W2 offset <span class="val" id="v-wo1">5</span></div>
+                <input type="range" class="ctrl win-off" data-win="1" min="0" max="28" step="0.5" value="5">
+              </div>
+              <div class="ctrl-row" style="margin:0">
+                <div class="ctrl-label">width <span class="val" id="v-ww1">3</span></div>
+                <input type="range" class="ctrl win-wid" data-win="1" min="1" max="10" step="0.25" value="3">
+              </div>
+            </div>
+            <div class="win-row" data-win="2">
+              <div class="ctrl-row" style="margin:0">
+                <div class="ctrl-label">W3 offset <span class="val" id="v-wo2">9</span></div>
+                <input type="range" class="ctrl win-off" data-win="2" min="0" max="28" step="0.5" value="9">
+              </div>
+              <div class="ctrl-row" style="margin:0">
+                <div class="ctrl-label">width <span class="val" id="v-ww2">3</span></div>
+                <input type="range" class="ctrl win-wid" data-win="2" min="1" max="10" step="0.25" value="3">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sidebar-scroll -->
+
+      <!-- status bar -->
+      <div id="statusbar">
+        <div class="stat"><span>Brackets</span><span id="st-br">—</span></div>
+        <div class="stat"><span>Hem height</span><span id="st-hem">—</span></div>
+        <div class="stat"><span>Bracket spacing</span><span id="st-brcheck">—</span></div>
+        <div class="stat"><span>Soffit coverage</span><span id="st-cov">—</span></div>
+      </div>
+    </div><!-- /sidebar -->
+
+    <!-- 3D canvas -->
+    <div id="canvas-wrap">
+      <canvas id="bp-canvas"></canvas>
+      <div id="hint">Drag · Scroll · Right-drag</div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ── hardware catalog ── */
+const HW = {
+  ripplefold:              { profile:'flat',  pw:1/12,    ph:0.5/12,  br_max:16, round:false },
+  silent_gliss_6100:       { profile:'round', pr:0.625/12,            br_max:20, round:true  },
+  silent_gliss_6840:       { profile:'flat',  pw:1.375/12,ph:1/12,    br_max:20, round:false },
+  hunter_douglas_traverse: { profile:'flat',  pw:1.5/12,  ph:0.75/12, br_max:30, round:false },
+  graber_steel_traverse:   { profile:'flat',  pw:1.25/12, ph:0.625/12,br_max:24, round:false },
+  lutron_platinum:         { profile:'flat',  pw:2/12,    ph:1.25/12, br_max:18, round:false },
+  kirsch_superfine:        { profile:'round', pr:0.5/12,              br_max:28, round:true  },
+  custom:                  { profile:'flat',  pw:1.75/12, ph:0.875/12,br_max:24, round:false },
+};
+
+/* ── renderer / camera (created once) ── */
+const canvas   = document.getElementById('bp-canvas');
+const wrap     = document.getElementById('canvas-wrap');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1917);
+
+const camera   = new THREE.PerspectiveCamera(42, 1, 0.01, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+
+/* lighting (static) */
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const sun = new THREE.DirectionalLight(0xfff8ee, 0.95);
+sun.position.set(12, 20, 18);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xdce8ff, 0.28);
+fill.position.set(-8, 6, -10);
+scene.add(fill);
+
+/* dynamic group — rebuilt on every change */
+const dyn = new THREE.Group();
+scene.add(dyn);
+
+/* ── geometry helpers ── */
+const matMemo = {};
+function mat(color, opacity, metalness=0, roughness=0.85) {
+  const key = `${color}|${opacity}|${metalness}|${roughness}`;
+  if (!matMemo[key]) {
+    matMemo[key] = new THREE.MeshStandardMaterial({
+      color, transparent: opacity < 1, opacity,
+      metalness, roughness, side: THREE.DoubleSide,
+    });
+  }
+  return matMemo[key];
+}
+function box(w, h, d, color, opacity=1, mx=0, my=0, mz=0) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, opacity));
+  m.position.set(mx, my, mz);
+  return m;
+}
+function edgeLines(geo, color=0x888888) {
+  return new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({ color })
+  );
+}
+
+/* ── read all controls ── */
+function V() {
+  const g = id => parseFloat(document.getElementById(id).value);
+  const hw = HW[document.getElementById('hw-key').value] || HW.custom;
+  const winOffsets = [0,1,2].map(i => parseFloat(document.querySelector(`.win-off[data-win="${i}"]`).value));
+  const winWidths  = [0,1,2].map(i => parseFloat(document.querySelector(`.win-wid[data-win="${i}"]`).value));
+  return {
+    rw: g('rw'), rl: g('rl'), rh: g('rh'),
+    wall: document.getElementById('s-wall').value,
+    s_bot: g('s-bot'), s_dep: g('s-dep')/12, s_len: g('s-len'), s_off: g('s-off'),
+    hw,
+    mount: document.getElementById('mount').value,
+    overhang: g('overhang')/12,
+    t_len: g('t-len'), t_off: g('t-off')/12, br_sp: g('br-sp')/12,
+    sheer: document.getElementById('sheer').checked,
+    drop: g('drop')/12, panels: Math.round(g('panels')),
+    wins: winOffsets.map((off, i) => ({ off, w: winWidths[i] })),
+  };
+}
+
+/* ── build scene ── */
+let defaultCamSet = false;
+
+function buildScene() {
+  /* clear dynamic group */
+  dyn.children.slice().forEach(o => {
+    o.geometry?.dispose();
+    dyn.remove(o);
+  });
+
+  const D = V();
+  const { rw, rl, rh, wall, s_bot, s_dep, s_len, s_off,
+          hw, mount, overhang, t_len, t_off, br_sp,
+          sheer, drop, panels } = D;
+
+  const sH = rh - s_bot;  // soffit box height
+
+  /* ── floor ── */
+  const floor = box(rw, 0.015, rl, 0xc8c4be, 1, rw/2, 0, rl/2);
+  dyn.add(floor);
+  const eg = edgeLines(floor.geometry, 0xa0a09a);
+  eg.position.copy(floor.position);
+  dyn.add(eg);
+
+  /* ── floor grid ── */
+  const grid = new THREE.GridHelper(Math.max(rw,rl)*1.6, 16, 0x3a3835, 0x2e2c2a);
+  grid.position.set(rw/2, 0.003, rl/2);
+  dyn.add(grid);
+
+  /* ── walls ── */
+  const wt = 0.018;
+  const wallMat = new THREE.MeshStandardMaterial({
+    color: 0xd8d4cc, transparent: true, opacity: 0.14, side: THREE.DoubleSide, roughness: 1
+  });
+  const wallEdgeMat = new THREE.LineBasicMaterial({ color: 0x5a5855 });
+  [
+    [rw, rh, wt,  rw/2, rh/2, 0],
+    [rw, rh, wt,  rw/2, rh/2, rl],
+    [wt, rh, rl,  0,    rh/2, rl/2],
+    [wt, rh, rl,  rw,   rh/2, rl/2],
+  ].forEach(([w,h,d,x,y,z]) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wallMat);
+    m.position.set(x,y,z);
+    dyn.add(m);
+    const el = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), wallEdgeMat);
+    el.position.copy(m.position);
+    dyn.add(el);
+  });
+
+  /* ceiling */
+  const ceil = box(rw, wt, rl, 0xc8c4bc, 0.07, rw/2, rh, rl/2);
+  dyn.add(ceil);
+
+  /* ── soffit ── */
+  let sfx, sfz, sfW, sfD, trackAxis, trackX1, trackZ;
+
+  if (wall === 'top') {
+    sfW=s_len; sfD=s_dep; sfx=s_off+sfW/2; sfz=rl-sfD/2;
+    trackAxis='x'; trackX1=s_off+t_off; trackZ=rl-s_dep;
+  } else if (wall === 'bottom') {
+    sfW=s_len; sfD=s_dep; sfx=s_off+sfW/2; sfz=sfD/2;
+    trackAxis='x'; trackX1=s_off+t_off; trackZ=s_dep;
+  } else if (wall === 'left') {
+    sfW=s_dep; sfD=s_len; sfx=sfW/2; sfz=s_off+sfD/2;
+    trackAxis='z'; trackX1=s_dep; trackZ=s_off+t_off;
+  } else {
+    sfW=s_dep; sfD=s_len; sfx=rw-sfW/2; sfz=s_off+sfD/2;
+    trackAxis='z'; trackX1=rw-s_dep; trackZ=s_off+t_off;
+  }
+
+  const soffitMat = new THREE.MeshStandardMaterial({ color: 0x8c8880, roughness: 0.9 });
+  const soffit = new THREE.Mesh(new THREE.BoxGeometry(sfW, sH, sfD), soffitMat);
+  soffit.position.set(sfx, s_bot + sH/2, sfz);
+  dyn.add(soffit);
+  const se = edgeLines(soffit.geometry, 0x706860);
+  se.position.copy(soffit.position);
+  dyn.add(se);
+
+  /* ── overhang adjustment ── */
+  if (overhang > 0) {
+    if      (wall === 'top')    trackZ -= overhang;
+    else if (wall === 'bottom') trackZ += overhang;
+    else if (wall === 'left')   trackX1 -= overhang;
+    else                        trackX1 += overhang;
+  }
+
+  /* ── track ── */
+  const trackY = (mount === 'above') ? s_bot : (s_bot - (3/12));
+  const trackMetal = new THREE.MeshStandardMaterial({ color: 0x2c3e6b, metalness: 0.78, roughness: 0.2 });
+  let trackMesh;
+  if (hw.round) {
+    const r = hw.pr || 0.05;
+    trackMesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, t_len, 16), trackMetal);
+    if (trackAxis === 'x') {
+      trackMesh.rotation.z = Math.PI / 2;
+      trackMesh.position.set(trackX1 + t_len/2, trackY, trackZ);
+    } else {
+      trackMesh.rotation.x = Math.PI / 2;
+      trackMesh.position.set(trackX1, trackY, trackZ + t_len/2);
+    }
+  } else {
+    const tw = hw.pw || 1/12, th = hw.ph || 0.5/12;
+    if (trackAxis === 'x') {
+      trackMesh = new THREE.Mesh(new THREE.BoxGeometry(t_len, th, tw), trackMetal);
+      trackMesh.position.set(trackX1 + t_len/2, trackY - th/2, trackZ);
+    } else {
+      trackMesh = new THREE.Mesh(new THREE.BoxGeometry(tw, th, t_len), trackMetal);
+      trackMesh.position.set(trackX1, trackY - th/2, trackZ + t_len/2);
+    }
+  }
+  dyn.add(trackMesh);
+
+  /* ── brackets ── */
+  const nBr = Math.max(2, Math.round(t_len / br_sp) + 1);
+  const brMat = new THREE.MeshStandardMaterial({ color: 0x2c3e6b, metalness: 0.65, roughness: 0.3 });
+
+  for (let i = 0; i < nBr; i++) {
+    const frac = i / Math.max(nBr - 1, 1);
+    if (mount === 'above') {
+      /* bracket goes UP through soffit to ceiling */
+      const brH = rh - trackY;
+      const br = new THREE.Mesh(new THREE.BoxGeometry(0.035, brH, 0.035), brMat);
+      if (trackAxis === 'x') br.position.set(trackX1 + frac * t_len, trackY + brH/2, trackZ);
+      else                   br.position.set(trackX1, trackY + brH/2, trackZ + frac * t_len);
+      dyn.add(br);
+      /* ceiling anchor */
+      const anchor = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.018, 0.12), brMat);
+      anchor.position.copy(br.position);
+      anchor.position.y = rh - 0.009;
+      dyn.add(anchor);
+    } else {
+      const brH = s_bot - trackY + 0.035;
+      const br = new THREE.Mesh(new THREE.BoxGeometry(0.038, brH, 0.038), brMat);
+      if (trackAxis === 'x') br.position.set(trackX1 + frac * t_len, s_bot - brH/2, trackZ);
+      else                   br.position.set(trackX1, s_bot - brH/2, trackZ + frac * t_len);
+      dyn.add(br);
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.018, 0.12), brMat);
+      plate.position.copy(br.position);
+      plate.position.y = s_bot - 0.009;
+      dyn.add(plate);
+    }
+  }
+
+  /* ── curtain panels ── */
+  if (drop > 0 && panels > 0) {
+    const panelLen = t_len / panels;
+    const curtainY = trackY - drop / 2;
+    const numFolds = sheer ? 7 : 3;
+    const cColor   = sheer ? 0xd8e4ec : 0xa8b8c8;
+    const cOpacity = sheer ? 0.32     : 0.84;
+    const foldCol  = sheer ? 0x8899aa : 0x607080;
+
+    const curtainMat = new THREE.MeshStandardMaterial({
+      color: cColor, transparent: true, opacity: cOpacity,
+      roughness: 0.8, side: THREE.DoubleSide,
+    });
+
+    for (let i = 0; i < panels; i++) {
+      const frac = i / panels;
+      let cm;
+      if (trackAxis === 'x') {
+        cm = new THREE.Mesh(new THREE.BoxGeometry(panelLen * 0.93, drop, 0.009), curtainMat.clone());
+        cm.position.set(trackX1 + (frac + 0.5/panels) * t_len, curtainY, trackZ + 0.016);
+      } else {
+        cm = new THREE.Mesh(new THREE.BoxGeometry(0.009, drop, panelLen * 0.93), curtainMat.clone());
+        cm.position.set(trackX1 + 0.016, curtainY, trackZ + (frac + 0.5/panels) * t_len);
+      }
+      dyn.add(cm);
+
+      /* fold lines */
+      for (let f = 1; f < numFolds; f++) {
+        const foldMat = new THREE.LineBasicMaterial({
+          color: foldCol, transparent: true, opacity: sheer ? 0.18 : 0.25
+        });
+        const pts = [];
+        if (trackAxis === 'x') {
+          const fx = trackX1 + (frac + f/(numFolds * panels)) * t_len;
+          pts.push(new THREE.Vector3(fx, trackY,        trackZ + 0.022));
+          pts.push(new THREE.Vector3(fx, trackY - drop, trackZ + 0.022));
+        } else {
+          const fz = trackZ + (frac + f/(numFolds * panels)) * t_len;
+          pts.push(new THREE.Vector3(trackX1 + 0.022, trackY,        fz));
+          pts.push(new THREE.Vector3(trackX1 + 0.022, trackY - drop, fz));
+        }
+        dyn.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), foldMat));
+      }
+    }
+  }
+
+  /* ── windows ── */
+  const winMat = new THREE.MeshStandardMaterial({
+    color: 0x7ab8d8, transparent: true, opacity: 0.45, side: THREE.DoubleSide
+  });
+  D.wins.forEach(win => {
+    let wm;
+    const wh = rh * 0.42, wy = rh * 0.42, wt2 = 0.025;
+    if (wall === 'top') {
+      wm = new THREE.Mesh(new THREE.BoxGeometry(win.w, wh, wt2), winMat);
+      wm.position.set(win.off + win.w/2, wy, rl);
+    } else if (wall === 'bottom') {
+      wm = new THREE.Mesh(new THREE.BoxGeometry(win.w, wh, wt2), winMat);
+      wm.position.set(win.off + win.w/2, wy, 0);
+    } else if (wall === 'left') {
+      wm = new THREE.Mesh(new THREE.BoxGeometry(wt2, wh, win.w), winMat);
+      wm.position.set(0, wy, win.off + win.w/2);
+    } else {
+      wm = new THREE.Mesh(new THREE.BoxGeometry(wt2, wh, win.w), winMat);
+      wm.position.set(rw, wy, win.off + win.w/2);
+    }
+    dyn.add(wm);
+    /* window frame outline */
+    const we = edgeLines(wm.geometry, 0x5888a8);
+    we.position.copy(wm.position);
+    dyn.add(we);
+  });
+
+  /* ── camera default (first load only) ── */
+  if (!defaultCamSet) {
+    defaultCamSet = true;
+    const tx = rw/2, ty = rh*0.5, tz = rl/2;
+    controls.target.set(tx, ty, tz);
+    let cx,cy,cz;
+    switch(wall) {
+      case 'top':    cx=rw*0.4; cy=rh*1.05; cz=rl*2.1; break;
+      case 'bottom': cx=rw*0.4; cy=rh*1.05; cz=-rl*0.9; break;
+      case 'left':   cx=-rw*0.9; cy=rh*1.05; cz=rl*0.5; break;
+      default:       cx=rw*1.9;  cy=rh*1.05; cz=rl*0.5;
+    }
+    camera.position.set(cx, cy, cz);
+    controls.update();
+  }
+
+  /* ── status bar ── */
+  const hemH = (trackY - drop) * 12; // inches from floor
+  const brSp_in = br_sp * 12;
+  const maxBr   = hw.br_max;
+  document.getElementById('st-br').textContent    = nBr + ' brackets';
+  document.getElementById('st-hem').textContent   = hemH.toFixed(1) + '" from floor';
+  const brCheckEl = document.getElementById('st-brcheck');
+  if (brSp_in > maxBr) {
+    brCheckEl.innerHTML = `<span class="warn">⚠ ${brSp_in}" > max ${maxBr}"</span>`;
+  } else {
+    brCheckEl.innerHTML = `<span class="ok">✓ ${brSp_in}" (max ${maxBr}")</span>`;
+  }
+  const trackEndX = s_off + t_off + t_len;  // in feet
+  const coverage = ((t_len / s_len) * 100).toFixed(0);
+  document.getElementById('st-cov').textContent = `Track covers ${coverage}% of soffit`;
+}
+
+/* ── resize ── */
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ── animation loop ── */
+(function loop() {
+  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+/* ── control wiring ── */
+let rebuildTimer;
+function scheduleRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(buildScene, 120);
+}
+
+/* update display values inline */
+function wire(id, displayId, fmt) {
+  const el = document.getElementById(id);
+  const dv = document.getElementById(displayId);
+  el.addEventListener('input', () => {
+    if (dv) dv.textContent = fmt(parseFloat(el.value));
+    scheduleRebuild();
+  });
+}
+wire('rw',     'v-rw',    v => v + ' ft');
+wire('rl',     'v-rl',    v => v + ' ft');
+wire('rh',     'v-rh',    v => v + ' ft');
+wire('s-bot',  'v-sbot',  v => v.toFixed(2) + ' ft');
+wire('s-dep',  'v-sdep',  v => v + '"');
+wire('s-len',  'v-slen',  v => v + ' ft');
+wire('s-off',  'v-soff',  v => v + ' ft');
+wire('overhang','v-ovhg', v => v + '"');
+wire('t-len',  'v-tlen',  v => v + ' ft');
+wire('t-off',  'v-toff',  v => v + '"');
+wire('br-sp',  'v-brsp',  v => v + '"');
+wire('drop',   'v-drop',  v => v + '"');
+wire('panels', 'v-panels',v => Math.round(v));
+
+/* selects, toggles, window sliders */
+document.querySelectorAll('.ctrl').forEach(el => {
+  if (el.tagName === 'SELECT' || el.type === 'checkbox') {
+    el.addEventListener('change', scheduleRebuild);
+  }
+});
+[0,1,2].forEach(i => {
+  const oEl = document.querySelector(`.win-off[data-win="${i}"]`);
+  const wEl = document.querySelector(`.win-wid[data-win="${i}"]`);
+  oEl.addEventListener('input', () => {
+    document.getElementById(`v-wo${i}`).textContent = oEl.value;
+    scheduleRebuild();
+  });
+  wEl.addEventListener('input', () => {
+    document.getElementById(`v-ww${i}`).textContent = wEl.value;
+    scheduleRebuild();
+  });
+});
+
+/* hardware key auto-updates bracket spacing display */
+document.getElementById('hw-key').addEventListener('change', () => {
+  const hw = HW[document.getElementById('hw-key').value] || HW.custom;
+  document.getElementById('br-sp').value = hw.br_max;
+  document.getElementById('v-brsp').textContent = hw.br_max + '"';
+  scheduleRebuild();
+});
+
+/* initial build */
+buildScene();
+
+/* ── exported functions ── */
+window.resetCamera = function() {
+  defaultCamSet = false;
+  buildScene();
+};
+
+window.openBlueprintPDF = function() {
+  alert('Run: python3 blueprint.py boudreau_bedroom.json --pdf\nfrom the glamour-tools directory');
+};
+
+</script>
+</body>
+</html>

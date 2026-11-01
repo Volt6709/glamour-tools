@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blueprint — Alexx Boudreau / Living Room</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    background: #fff;
+    color: #1a1a1a;
+    padding: 0;
+  }
+  .page {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 30px 30px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #1a1a1a;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  .header-left h1 {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-left p { font-size: 11px; color: #555; margin-top: 3px; }
+  .header-right { text-align: right; font-size: 11px; color: #555; line-height: 1.6; }
+  .drawing-title {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #555;
+    text-transform: uppercase;
+    margin: 14px 0 4px;
+  }
+  svg { display: block; border: 1px solid #e0e0e0; background: #fafafa; }
+  .specs-section { margin-top: 20px; }
+  .specs-title {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  table.specs {
+    border-collapse: collapse;
+    width: 50%;
+    font-size: 11px;
+  }
+  table.specs td {
+    padding: 3px 10px 3px 0;
+    border-bottom: 1px solid #eee;
+    color: #333;
+  }
+  table.specs td:first-child { font-weight: bold; width: 220px; color: #1a1a1a; }
+  .footer {
+    margin-top: 18px;
+    font-size: 9px;
+    color: #aaa;
+    border-top: 1px solid #eee;
+    padding-top: 6px;
+    text-align: right;
+  }
+  .view3d-wrap {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    background: #f2f0ec;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .view3d-wrap canvas { display: block; }
+  .view3d-hint {
+    font-size: 10px;
+    color: #999;
+    margin-top: 4px;
+    text-align: center;
+  }
+  @media print {
+    body { background: white; }
+    .page { padding: 12px 16px; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Glamour Upholstery</h1>
+      <p>Installation Blueprint</p>
+    </div>
+    <div class="header-right">
+      <strong>Alexx Boudreau</strong><br>
+      Project: Living Room Curtains<br>
+      Room: Living Room<br>
+      Date: June 21, 2026
+    </div>
+  </div>
+
+  <div class="drawing-title">Drawing 1 of 3 — Floor Plan (Top View)</div>
+  <svg xmlns="http://www.w3.org/2000/svg" width="820" height="600" viewBox="0 0 820 600"><title>Floor Plan</title>
+  <defs>
+    <marker id="as" markerWidth="7" markerHeight="7" refX="3.5" refY="2"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M7,0 L0,2 L7,4 Z" fill="#555"/>
+    </marker>
+    <marker id="ae" markerWidth="7" markerHeight="7" refX="3.5" refY="2"
+            orient="auto-start-reverse" markerUnits="strokeWidth">
+      <path d="M7,0 L0,2 L7,4 Z" fill="#555"/>
+    </marker>
+    <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8"
+             patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#bbb" stroke-width="1.2"/>
+    </pattern>
+  </defs><rect width="820" height="600" fill="#fafafa"/>
+  <!-- floor plan label -->
+  <text x="410" y="22" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="13" font-weight="bold" fill="#1a1a1a">FLOOR PLAN — TOP VIEW</text>
+  <rect x="85" y="85" width="521.21" height="430.00" fill="white" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="111.06" y="85.00" width="469.09" height="30.40" fill="url(#hatch)" stroke="#555" stroke-width="1.2"/><text x="345.6060606060606" y="104.20202020202021" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="9" fill="#1a1a1a">SOFFIT</text>
+  <line x1="130.61" y1="108.89" x2="534.55" y2="108.89" stroke="#1a3f6f" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="130.61" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="188.31" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="246.02" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="303.72" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="361.43" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="419.13" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="476.84" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <circle cx="534.55" cy="108.89" r="3.5" fill="#1a3f6f" stroke="white" stroke-width="1"/>
+  <rect x="137.12" y="85.00" width="156.36" height="6.00" fill="#d0eaf7" stroke="#6aaed6" stroke-width="1.5"/>
+  <line x1="85" y1="538.0" x2="85" y2="552.0" stroke="#555" stroke-width="0.8"/><line x1="606.2121212121212" y1="538.0" x2="606.2121212121212" y2="552.0" stroke="#555" stroke-width="0.8"/><line x1="85" y1="545.0" x2="606.2121212121212" y2="545.0" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="345.6" y="559.0" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">20'-0"</text>
+  <line x1="629.2121212121212" y1="85" x2="643.2121212121212" y2="85" stroke="#555" stroke-width="0.8"/><line x1="629.2121212121212" y1="515.0" x2="643.2121212121212" y2="515.0" stroke="#555" stroke-width="0.8"/><line x1="636.2121212121212" y1="85" x2="636.2121212121212" y2="515.0" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="648.2121212121212" y="304.0" text-anchor="start" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">16'-6"</text>
+  <line x1="111.06060606060606" y1="48" x2="111.06060606060606" y2="62" stroke="#555" stroke-width="0.8"/><line x1="580.1515151515151" y1="48" x2="580.1515151515151" y2="62" stroke="#555" stroke-width="0.8"/><line x1="111.06060606060606" y1="55" x2="580.1515151515151" y2="55" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="345.6" y="47" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">18'-0"</text>
+  <line x1="130.60606060606062" y1="140.88888888888889" x2="130.60606060606062" y2="154.88888888888889" stroke="#555" stroke-width="0.8"/><line x1="534.5454545454545" y1="140.88888888888889" x2="534.5454545454545" y2="154.88888888888889" stroke="#555" stroke-width="0.8"/><line x1="130.60606060606062" y1="147.88888888888889" x2="534.5454545454545" y2="147.88888888888889" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="332.6" y="161.88888888888889" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">15'-6"</text>
+  <circle cx="788" cy="32" r="14" fill="none" stroke="#999" stroke-width="1"/>
+  <line x1="788" y1="18" x2="788" y2="46" stroke="#999" stroke-width="1"/>
+  <line x1="774" y1="32" x2="802" y2="32" stroke="#999" stroke-width="1"/>
+  <text x="788" y="15" text-anchor="middle" font-size="9" font-family="Courier New, Courier, monospace" fill="#777">N</text>
+  <text x="4" y="596" font-size="8" font-family="Courier New, Courier, monospace" fill="#aaa">scale approx</text>
+</svg>
+
+  <div class="drawing-title" style="margin-top:20px;">Drawing 2 of 3 — Elevation (Soffit Wall)</div>
+  <svg xmlns="http://www.w3.org/2000/svg" width="820" height="520" viewBox="0 0 820 520"><title>Elevation</title>
+  <defs>
+    <marker id="as" markerWidth="7" markerHeight="7" refX="3.5" refY="2"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M7,0 L0,2 L7,4 Z" fill="#555"/>
+    </marker>
+    <marker id="ae" markerWidth="7" markerHeight="7" refX="3.5" refY="2"
+            orient="auto-start-reverse" markerUnits="strokeWidth">
+      <path d="M7,0 L0,2 L7,4 Z" fill="#555"/>
+    </marker>
+    <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8"
+             patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#bbb" stroke-width="1.2"/>
+    </pattern>
+  </defs><rect width="820" height="520" fill="#fafafa"/>
+  <text x="410" y="22" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="13" font-weight="bold" fill="#1a1a1a">ELEVATION — SOFFIT WALL</text>
+  <line x1="85" y1="435.0" x2="735.0" y2="435.0" stroke="#1a1a1a" stroke-width="2.5"/>
+  <line x1="85" y1="142.5" x2="735.0" y2="142.5" stroke="#1a1a1a" stroke-width="2.5"/>
+  <line x1="85" y1="435.0" x2="85" y2="142.5" stroke="#1a1a1a" stroke-width="2.5"/>
+  <line x1="735.0" y1="435.0" x2="735.0" y2="142.5" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="117.50" y="142.50" width="585.00" height="32.50" fill="#d8d8d8" stroke="#555" stroke-width="1.5"/>
+  <rect x="117.50" y="142.50" width="585.00" height="32.50" fill="url(#hatch)" stroke="#555" stroke-width="1.5" fill-opacity="0.5"/><text x="410.0" y="162.75" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="9" fill="#1a1a1a">SOFFIT</text>
+  <line x1="141.88" y1="183.12" x2="645.62" y2="183.12" stroke="#1a3f6f" stroke-width="4" stroke-linecap="round"/>
+  <line x1="141.88" y1="175.00" x2="141.88" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="137.88" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="213.84" y1="175.00" x2="213.84" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="209.84" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="285.80" y1="175.00" x2="285.80" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="281.80" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="357.77" y1="175.00" x2="357.77" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="353.77" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="429.73" y1="175.00" x2="429.73" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="425.73" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="501.70" y1="175.00" x2="501.70" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="497.70" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="573.66" y1="175.00" x2="573.66" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="569.66" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <line x1="645.62" y1="175.00" x2="645.62" y2="183.12" stroke="#1a3f6f" stroke-width="2"/>
+  <rect x="641.62" y="175.00" width="8" height="6" fill="#1a3f6f"/>
+  <rect x="141.88" y="183.12" width="125.94" height="243.75" fill="#c5cfd8" stroke="#a0acb5" stroke-width="0.8" fill-opacity="0.7"/>
+  <line x1="183.43" y1="183.12" x2="183.43" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <line x1="224.99" y1="183.12" x2="224.99" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <rect x="267.81" y="183.12" width="125.94" height="243.75" fill="#c5cfd8" stroke="#a0acb5" stroke-width="0.8" fill-opacity="0.7"/>
+  <line x1="309.37" y1="183.12" x2="309.37" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <line x1="350.93" y1="183.12" x2="350.93" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <rect x="393.75" y="183.12" width="125.94" height="243.75" fill="#c5cfd8" stroke="#a0acb5" stroke-width="0.8" fill-opacity="0.7"/>
+  <line x1="435.31" y1="183.12" x2="435.31" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <line x1="476.87" y1="183.12" x2="476.87" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <rect x="519.69" y="183.12" width="125.94" height="243.75" fill="#c5cfd8" stroke="#a0acb5" stroke-width="0.8" fill-opacity="0.7"/>
+  <line x1="561.25" y1="183.12" x2="561.25" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <line x1="602.81" y1="183.12" x2="602.81" y2="426.88" stroke="#a0acb5" stroke-width="0.6" stroke-dasharray="3,4"/>
+  <line x1="758.0" y1="435.0" x2="772.0" y2="435.0" stroke="#555" stroke-width="0.8"/><line x1="758.0" y1="142.5" x2="772.0" y2="142.5" stroke="#555" stroke-width="0.8"/><line x1="765.0" y1="435.0" x2="765.0" y2="142.5" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="777.0" y="292.8" text-anchor="start" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">9'-0"</text>
+  <line x1="788.0" y1="175.0" x2="802.0" y2="175.0" stroke="#555" stroke-width="0.8"/><line x1="788.0" y1="142.5" x2="802.0" y2="142.5" stroke="#555" stroke-width="0.8"/><line x1="795.0" y1="175.0" x2="795.0" y2="142.5" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="807.0" y="162.8" text-anchor="start" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">1'-0"</text>
+  <line x1="48" y1="426.875" x2="62" y2="426.875" stroke="#555" stroke-width="0.8"/><line x1="48" y1="183.125" x2="62" y2="183.125" stroke="#555" stroke-width="0.8"/><line x1="55" y1="426.875" x2="55" y2="183.125" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="49" y="309.0" text-anchor="end" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">7'-6"</text>
+  <line x1="141.875" y1="206.125" x2="141.875" y2="220.125" stroke="#555" stroke-width="0.8"/><line x1="645.625" y1="206.125" x2="645.625" y2="220.125" stroke="#555" stroke-width="0.8"/><line x1="141.875" y1="213.125" x2="645.625" y2="213.125" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="393.8" y="227.125" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">15'-6"</text>
+  <line x1="85" y1="473.0" x2="85" y2="487.0" stroke="#555" stroke-width="0.8"/><line x1="735.0" y1="473.0" x2="735.0" y2="487.0" stroke="#555" stroke-width="0.8"/><line x1="85" y1="480.0" x2="735.0" y2="480.0" stroke="#555" stroke-width="0.8" marker-start="url(#as)" marker-end="url(#ae)"/><text x="410.0" y="494.0" text-anchor="middle" font-family="Courier New, Courier, monospace" font-size="10" fill="#555">20'-0"</text>
+  <text x="4" y="516" font-size="8" font-family="Courier New, Courier, monospace" fill="#aaa">scale approx</text>
+</svg>
+
+  <div class="drawing-title no-print" style="margin-top:20px;">Drawing 3 of 3 — 3D View (Interactive)</div>
+  <div class="view3d-wrap no-print">
+    <canvas id="bp-3d"></canvas>
+  </div>
+  <div class="view3d-hint no-print">Drag to rotate &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Right-drag to pan</div>
+
+  <div class="specs-section">
+    <div class="specs-title">Specifications</div>
+    <table class="specs"><tr><td>Room Width</td><td>20'-0"</td></tr><tr><td>Room Length</td><td>16'-6"</td></tr><tr><td>Ceiling Height</td><td>9'-0"</td></tr><tr><td>Soffit Bottom</td><td>8'-0" from floor</td></tr><tr><td>Soffit Depth</td><td>1'-2"</td></tr><tr><td>Soffit Length</td><td>18'-0"</td></tr><tr><td>Track System</td><td>Custom / Specify</td></tr><tr><td>Track Profile</td><td>Flat</td></tr><tr><td>Track Length</td><td>15'-6"</td></tr><tr><td>Track Inset</td><td>3" from soffit face</td></tr><tr><td>Bracket Spacing</td><td>2'-0" (max 2'-0" for this track)</td></tr><tr><td>Bracket Count</td><td>8</td></tr><tr><td>Curtain Drop</td><td>7'-6"</td></tr><tr><td>Panel Count</td><td>4</td></tr><tr><td>Hardware Note</td><td>Enter bracket spacing manually.</td></tr></table>
+  </div>
+
+  <div class="footer">
+    Generated by Glamour Blueprint Agent &nbsp;|&nbsp; June 21, 2026 &nbsp;|&nbsp; All dimensions in inches unless noted
+  </div>
+
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const D = {"rw": 20.0, "rl": 16.5, "rh": 9.0, "wall": "top", "s_len": 18.0, "s_dep": 1.1667, "s_bot": 8.0, "s_off": 1.0, "t_len": 15.5, "t_off": 0.75, "t_ins": 0.25, "br_sp": 2.0, "drop": 7.5, "panels": 4, "windows": [{"wall": "top", "offset": 2.0, "width": 6.0}], "fabric_url": null, "lining_url": null, "hw": {"profile": "flat", "profile_r": 0.0521, "profile_w": 0.1458, "profile_h": 0.0729}};
+
+/* ── helpers ── */
+function box(w, h, d, color, opacity) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = new THREE.MeshLambertMaterial({
+    color,
+    transparent: opacity !== undefined && opacity < 1,
+    opacity: opacity ?? 1,
+    side: THREE.DoubleSide,
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+function edges(mesh, color=0x888888) {
+  const eg = new THREE.EdgesGeometry(mesh.geometry);
+  const lm = new THREE.LineSegments(eg, new THREE.LineBasicMaterial({color}));
+  lm.position.copy(mesh.position);
+  return lm;
+}
+
+/* ── scene ── */
+const canvas   = document.getElementById('bp-3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf2f0ec);
+
+const W = canvas.parentElement.clientWidth;
+const H = Math.round(W * 0.52);
+canvas.style.width  = W + 'px';
+canvas.style.height = H + 'px';
+renderer.setSize(W, H);
+
+const camera = new THREE.PerspectiveCamera(42, W / H, 0.01, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+
+/* ── lighting ── */
+scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+const sun = new THREE.DirectionalLight(0xfff8ee, 0.9);
+sun.position.set(D.rw * 1.5, D.rh * 2.5, D.rl * 2);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xdce8ff, 0.3);
+fill.position.set(-D.rw, D.rh, -D.rl);
+scene.add(fill);
+
+/* ── room shell ──
+   Origin: floor left-front corner.
+   X = width, Y = height, Z = depth (0=front, rl=back).
+   Soffit wall:
+     top    → back wall at Z = rl, soffit protrudes toward Z = rl - s_dep
+     bottom → front wall at Z = 0, soffit protrudes toward Z = s_dep
+     left   → left wall at X = 0,  soffit protrudes toward X = s_dep
+     right  → right wall at X = rw, soffit protrudes toward X = rw - s_dep
+*/
+const { rw, rl, rh, wall, s_len, s_dep, s_bot, s_off,
+         t_len, t_off, t_ins, br_sp, drop, panels } = D;
+
+const sH = rh - s_bot;   // soffit box height (ceiling to soffit bottom)
+
+/* floor */
+const floor = box(rw, 0.015, rl, 0xd2cec8);
+floor.position.set(rw/2, 0, rl/2);
+scene.add(floor);
+scene.add(edges(floor, 0xaaa89f));
+
+/* grid on floor */
+const grid = new THREE.GridHelper(Math.max(rw, rl) * 1.6, 16, 0xbbb8b2, 0xd0cdc8);
+grid.position.set(rw/2, 0.002, rl/2);
+scene.add(grid);
+
+/* walls — semi-transparent so interior is visible */
+const wallMat = new THREE.MeshLambertMaterial({
+  color: 0xf0ede8, transparent: true, opacity: 0.22, side: THREE.DoubleSide
+});
+function wallMesh(w, h, d, x, y, z) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+  m.position.set(x, y, z);
+  return m;
+}
+const t = 0.025;  // wall thickness
+scene.add(wallMesh(rw,   rh, t,   rw/2, rh/2, 0));      // front
+scene.add(wallMesh(rw,   rh, t,   rw/2, rh/2, rl));     // back
+scene.add(wallMesh(t,    rh, rl,  0,    rh/2, rl/2));   // left
+scene.add(wallMesh(t,    rh, rl,  rw,   rh/2, rl/2));   // right
+
+/* wall edge outlines */
+[
+  [rw, rh, t,  rw/2, rh/2, 0],
+  [rw, rh, t,  rw/2, rh/2, rl],
+  [t,  rh, rl, 0,    rh/2, rl/2],
+  [t,  rh, rl, rw,   rh/2, rl/2],
+].forEach(([w,h,d,x,y,z]) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d));
+  m.position.set(x,y,z);
+  scene.add(edges(m, 0xb0aca6));
+});
+
+/* ceiling (very transparent) */
+const ceil = box(rw, t, rl, 0xe8e4de, 0.08);
+ceil.position.set(rw/2, rh, rl/2);
+scene.add(ceil);
+
+/* ── soffit ── */
+let sfx, sfz, sfBotY = s_bot, sfTopY = rh;
+let sfW, sfD;   // (x-extent, z-extent)
+let trackAxis;  // 'x' or 'z'
+let trackX1, trackX2, trackZ;
+
+if (wall === 'top') {
+  sfW = s_len; sfD = s_dep;
+  sfx = s_off + sfW/2;
+  sfz = rl - sfD/2;
+  trackAxis = 'x';
+  trackX1 = s_off + t_off;
+  trackX2 = trackX1 + t_len;
+  trackZ   = rl - s_dep;        // face of soffit (front-facing)
+} else if (wall === 'bottom') {
+  sfW = s_len; sfD = s_dep;
+  sfx = s_off + sfW/2;
+  sfz = sfD/2;
+  trackAxis = 'x';
+  trackX1 = s_off + t_off;
+  trackX2 = trackX1 + t_len;
+  trackZ   = s_dep;
+} else if (wall === 'left') {
+  sfW = s_dep; sfD = s_len;
+  sfx = sfW/2;
+  sfz = s_off + sfD/2;
+  trackAxis = 'z';
+  trackX1 = s_dep;
+  trackX2 = trackX1;
+  trackZ   = s_off + t_off;
+} else {  // right
+  sfW = s_dep; sfD = s_len;
+  sfx = rw - sfW/2;
+  sfz = s_off + sfD/2;
+  trackAxis = 'z';
+  trackX1 = rw - s_dep;
+  trackX2 = trackX1;
+  trackZ   = s_off + t_off;
+}
+
+const soffit = box(sfW, sH, sfD, 0xc8c2bb);
+soffit.position.set(sfx, s_bot + sH/2, sfz);
+scene.add(soffit);
+scene.add(edges(soffit, 0x888078));
+
+/* ── track — profile-aware ── */
+const trackY = s_bot - t_ins;
+const hw = D.hw;
+const trackMetal = new THREE.MeshStandardMaterial({
+  color: 0x1a3f6f, metalness: 0.72, roughness: 0.28,
+});
+
+let trackMesh;
+if (hw.profile === 'round') {
+  const r = hw.profile_r;
+  const geo = new THREE.CylinderGeometry(r, r, t_len, 16);
+  trackMesh = new THREE.Mesh(geo, trackMetal);
+  if (trackAxis === 'x') {
+    trackMesh.rotation.z = Math.PI / 2;
+    trackMesh.position.set((trackX1 + t_len/2), trackY, trackZ);
+  } else {
+    trackMesh.rotation.x = Math.PI / 2;
+    trackMesh.position.set(trackX1, trackY, trackZ + t_len/2);
+  }
+} else {
+  const tw = hw.profile_w, th = hw.profile_h;
+  if (trackAxis === 'x') {
+    trackMesh = new THREE.Mesh(new THREE.BoxGeometry(t_len, th, tw), trackMetal);
+    trackMesh.position.set(trackX1 + t_len/2, trackY - th/2, trackZ);
+  } else {
+    trackMesh = new THREE.Mesh(new THREE.BoxGeometry(tw, th, t_len), trackMetal);
+    trackMesh.position.set(trackX1, trackY - th/2, trackZ + t_len/2);
+  }
+}
+scene.add(trackMesh);
+
+/* ── brackets ── */
+const nBr = Math.max(2, Math.round(t_len / br_sp) + 1);
+const brH = s_bot - trackY + 0.04;
+const brMat = new THREE.MeshStandardMaterial({ color: 0x1a3f6f, metalness: 0.6, roughness: 0.35 });
+for (let i = 0; i < nBr; i++) {
+  const frac = i / Math.max(nBr - 1, 1);
+  const br = new THREE.Mesh(new THREE.BoxGeometry(0.042, brH, 0.042), brMat);
+  if (trackAxis === 'x') {
+    br.position.set(trackX1 + frac * t_len, s_bot - brH/2, trackZ);
+  } else {
+    br.position.set(trackX1, s_bot - brH/2, trackZ + frac * t_len);
+  }
+  scene.add(br);
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.022, 0.13), brMat);
+  plate.position.copy(br.position);
+  plate.position.y = s_bot - 0.01;
+  scene.add(plate);
+}
+
+/* ── curtain panels + fabric texture ── */
+const curtainMeshes = [];
+if (drop > 0 && panels > 0) {
+  const panelLen = t_len / panels;
+  const curtainY = trackY - drop / 2;
+
+  const curtainMat = new THREE.MeshStandardMaterial({
+    color: 0xb8c8d8,
+    roughness: 0.88,
+    metalness: 0.0,
+    transparent: true,
+    opacity: 0.87,
+    side: THREE.DoubleSide,
+  });
+
+  for (let i = 0; i < panels; i++) {
+    const frac = i / panels;
+    let cm;
+    if (trackAxis === 'x') {
+      cm = new THREE.Mesh(
+        new THREE.BoxGeometry(panelLen * 0.93, drop, 0.010),
+        curtainMat.clone()
+      );
+      cm.position.set(trackX1 + (frac + 0.5/panels) * t_len, curtainY, trackZ + 0.018);
+    } else {
+      cm = new THREE.Mesh(
+        new THREE.BoxGeometry(0.010, drop, panelLen * 0.93),
+        curtainMat.clone()
+      );
+      cm.position.set(trackX1 + 0.018, curtainY, trackZ + (frac + 0.5/panels) * t_len);
+    }
+    scene.add(cm);
+    curtainMeshes.push({ mesh: cm, panelLen, i });
+
+    /* fold lines */
+    for (let f2 = 1; f2 < 4; f2++) {
+      const foldMat = new THREE.LineBasicMaterial({
+        color: 0x8899aa, transparent: true, opacity: 0.28
+      });
+      const pts = [];
+      if (trackAxis === 'x') {
+        const fx = trackX1 + (frac + f2 / (4 * panels)) * t_len;
+        pts.push(new THREE.Vector3(fx, trackY,        trackZ + 0.025));
+        pts.push(new THREE.Vector3(fx, trackY - drop, trackZ + 0.025));
+      } else {
+        const fz = trackZ + (frac + f2 / (4 * panels)) * t_len;
+        pts.push(new THREE.Vector3(trackX1 + 0.025, trackY,        fz));
+        pts.push(new THREE.Vector3(trackX1 + 0.025, trackY - drop, fz));
+      }
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), foldMat));
+    }
+  }
+
+  /* load fabric texture (silent fail → keeps solid colour) */
+  if (D.fabric_url) {
+    const loader = new THREE.TextureLoader();
+    loader.load(D.fabric_url,
+      (tex) => {
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        curtainMeshes.forEach(({ mesh, panelLen }) => {
+          const tClone = tex.clone();
+          tClone.needsUpdate = true;
+          /* ~3 pattern repeats per foot of panel width, ~2 per foot of drop */
+          tClone.repeat.set(
+            Math.max(1, Math.round(panelLen * 3)),
+            Math.max(1, Math.round(drop * 2))
+          );
+          mesh.material.map = tClone;
+          mesh.material.color.set(0xffffff);
+          mesh.material.opacity = 0.92;
+          mesh.material.needsUpdate = true;
+        });
+      },
+      undefined,
+      () => {}   // fail silently
+    );
+  }
+
+  /* lining overlay (second semi-transparent layer behind panels) */
+  if (D.lining_url) {
+    const lLoader = new THREE.TextureLoader();
+    lLoader.load(D.lining_url, (tex) => {
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(2, 3);
+      const lMat = new THREE.MeshStandardMaterial({
+        map: tex, transparent: true, opacity: 0.45, side: THREE.DoubleSide,
+      });
+      curtainMeshes.forEach(({ mesh }) => {
+        const lm = mesh.clone();
+        lm.material = lMat;
+        if (trackAxis === 'x') lm.position.z += 0.015;
+        else                   lm.position.x += 0.015;
+        scene.add(lm);
+      });
+    }, undefined, () => {});
+  }
+}
+
+/* ── windows ── */
+D.windows.forEach(win => {
+  const wMat = new THREE.MeshLambertMaterial({
+    color: 0xa8d8ea, transparent: true, opacity: 0.55, side: THREE.DoubleSide
+  });
+  let wm;
+  const wt = 0.03;
+  switch(win.wall) {
+    case 'top':
+      wm = new THREE.Mesh(new THREE.BoxGeometry(win.width, rh*0.45, wt), wMat);
+      wm.position.set(win.offset + win.width/2, rh*0.4, rl);
+      break;
+    case 'bottom':
+      wm = new THREE.Mesh(new THREE.BoxGeometry(win.width, rh*0.45, wt), wMat);
+      wm.position.set(win.offset + win.width/2, rh*0.4, 0);
+      break;
+    case 'left':
+      wm = new THREE.Mesh(new THREE.BoxGeometry(wt, rh*0.45, win.width), wMat);
+      wm.position.set(0, rh*0.4, win.offset + win.width/2);
+      break;
+    case 'right':
+      wm = new THREE.Mesh(new THREE.BoxGeometry(wt, rh*0.45, win.width), wMat);
+      wm.position.set(rw, rh*0.4, win.offset + win.width/2);
+      break;
+  }
+  if (wm) scene.add(wm);
+});
+
+/* ── camera initial position ── */
+let camX, camY, camZ, targetX, targetY, targetZ;
+targetX = rw / 2; targetY = rh * 0.5; targetZ = rl / 2;
+switch(wall) {
+  case 'top':    camX = rw*0.5; camY = rh*1.1; camZ = rl*2.0;  break;
+  case 'bottom': camX = rw*0.5; camY = rh*1.1; camZ = -rl*0.8; break;
+  case 'left':   camX = -rw*0.8; camY = rh*1.1; camZ = rl*0.5; break;
+  case 'right':  camX = rw*1.8;  camY = rh*1.1; camZ = rl*0.5; break;
+}
+camera.position.set(camX, camY, camZ);
+controls.target.set(targetX, targetY, targetZ);
+controls.update();
+
+/* ── animate ── */
+(function loop() {
+  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+/* ── resize ── */
+window.addEventListener('resize', () => {
+  const nw = canvas.parentElement.clientWidth;
+  const nh = Math.round(nw * 0.52);
+  canvas.style.width = nw+'px'; canvas.style.height = nh+'px';
+  renderer.setSize(nw, nh);
+  camera.aspect = nw / nh;
+  camera.updateProjectionMatrix();
+});
+
+</script>
+</body>
+</html>

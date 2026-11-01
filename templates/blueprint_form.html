@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Blueprint Agent{% endblock %}
+{% block content %}
+
+<style>
+  .bp-form { max-width: 720px; }
+  .bp-section {
+    margin-bottom: 28px;
+    padding: 18px 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+  .bp-section h3 {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #ddd;
+  }
+  .bp-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .bp-field { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+  .bp-field label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 4px; }
+  .bp-field input, .bp-field select {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: white;
+  }
+  .bp-hint { font-size: 10px; color: #999; margin-top: 2px; }
+  .window-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 8px; }
+  .window-row .bp-field { min-width: 100px; }
+  .btn-generate {
+    background: #1a3f6f;
+    color: white;
+    border: none;
+    padding: 10px 28px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .btn-generate:hover { background: #14305a; }
+</style>
+
+<h2 style="font-family:'Courier New',monospace; font-size:16px; font-weight:bold;
+           letter-spacing:2px; text-transform:uppercase; margin-bottom:20px;">
+  Blueprint Agent
+</h2>
+
+<form method="POST" action="/blueprint" target="_blank" class="bp-form">
+
+  <!-- Project info -->
+  <div class="bp-section">
+    <h3>Project Info</h3>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Client</label>
+        <input name="client" value="{{ demo.client }}" placeholder="Client Name">
+      </div>
+      <div class="bp-field">
+        <label>Project</label>
+        <input name="project" value="{{ demo.project }}" placeholder="Project Name">
+      </div>
+      <div class="bp-field">
+        <label>Room</label>
+        <input name="room" value="{{ demo.room }}" placeholder="Room">
+      </div>
+    </div>
+  </div>
+
+  <!-- Room dimensions -->
+  <div class="bp-section">
+    <h3>Room Dimensions</h3>
+    <p class="bp-hint" style="margin-bottom:12px;">Enter as inches (180) or feet-inches (15-0 = 15'0")</p>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Width</label>
+        <input name="room_width" value="{{ demo.room_width }}" required>
+        <span class="bp-hint">left ↔ right</span>
+      </div>
+      <div class="bp-field">
+        <label>Length / Depth</label>
+        <input name="room_length" value="{{ demo.room_length }}" required>
+        <span class="bp-hint">front ↔ back</span>
+      </div>
+      <div class="bp-field">
+        <label>Ceiling Height</label>
+        <input name="ceiling_height" value="{{ demo.ceiling_height }}" required>
+      </div>
+    </div>
+  </div>
+
+  <!-- Soffit -->
+  <div class="bp-section">
+    <h3>Soffit</h3>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Attached to Wall</label>
+        <select name="soffit_wall">
+          <option value="top" selected>Top (back wall)</option>
+          <option value="bottom">Bottom (front wall)</option>
+          <option value="left">Left wall</option>
+          <option value="right">Right wall</option>
+        </select>
+      </div>
+      <div class="bp-field">
+        <label>Bottom from Floor</label>
+        <input name="soffit_bottom_from_floor" value="{{ demo.soffit_bottom_from_floor }}" required>
+        <span class="bp-hint">where soffit face ends</span>
+      </div>
+    </div>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Soffit Depth (from wall)</label>
+        <input name="soffit_depth" value="{{ demo.soffit_depth }}" required>
+      </div>
+      <div class="bp-field">
+        <label>Soffit Length (width)</label>
+        <input name="soffit_length" value="{{ demo.soffit_length }}" required>
+      </div>
+      <div class="bp-field">
+        <label>Offset from Wall Edge</label>
+        <input name="soffit_offset" value="{{ demo.soffit_offset }}" placeholder="0">
+        <span class="bp-hint">leave 0 if full-wall</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Track + Hardware -->
+  <div class="bp-section">
+    <h3>Track System &amp; Hardware</h3>
+    <div class="bp-row">
+      <div class="bp-field" style="flex:2;">
+        <label>Track System</label>
+        <select name="hardware_key" id="hw-select" onchange="applyHardware(this.value)">
+          {% for key, hw in hardware.items() %}
+          <option value="{{ key }}" {% if key == 'custom' %}selected{% endif %}>
+            {{ hw.name }}{% if hw.motorized %} ⚡{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <span class="bp-hint" id="hw-note"></span>
+      </div>
+    </div>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Track Length</label>
+        <input name="track_length" value="{{ demo.track_length }}" required>
+      </div>
+      <div class="bp-field">
+        <label>Track Offset (from soffit start)</label>
+        <input name="track_offset" value="{{ demo.track_offset }}" placeholder="0">
+      </div>
+      <div class="bp-field">
+        <label>Track Inset (from soffit face)</label>
+        <input name="track_inset" value="{{ demo.track_inset }}" placeholder="0">
+        <span class="bp-hint">how far below soffit face</span>
+      </div>
+    </div>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Bracket Spacing</label>
+        <input name="bracket_spacing" id="bracket-spacing"
+               value="{{ demo.bracket_spacing }}" placeholder="24">
+        <span class="bp-hint" id="br-max-hint"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Curtains + Fabric -->
+  <div class="bp-section">
+    <h3>Curtains &amp; Fabric</h3>
+    <div class="bp-row">
+      <div class="bp-field">
+        <label>Drop Length</label>
+        <input name="curtain_drop" value="{{ demo.curtain_drop }}" placeholder="0">
+        <span class="bp-hint">from track to hem</span>
+      </div>
+      <div class="bp-field">
+        <label>Panel Count</label>
+        <input name="panel_count" value="{{ demo.panel_count }}"
+               type="number" min="0" max="20" placeholder="0">
+      </div>
+    </div>
+    <div class="bp-row">
+      <div class="bp-field" style="flex:2;">
+        <label>Main Fabric (from inventory)</label>
+        <select name="fabric_id">
+          <option value="">— None selected —</option>
+          {% for fab in fabrics %}
+          {% if fab.photo_path %}
+          <option value="{{ fab.id }}">
+            {{ fab.client_name }} · {{ fab.fabric_type }} {{ fab.color }}
+            {% if fab.supplier %} ({{ fab.supplier }}){% endif %}
+          </option>
+          {% endif %}
+          {% endfor %}
+        </select>
+        <span class="bp-hint">Only fabrics with a photo are shown — texture applied to 3D panels</span>
+      </div>
+      <div class="bp-field" style="flex:2;">
+        <label>Lining (optional)</label>
+        <select name="lining_id">
+          <option value="">— None —</option>
+          {% for fab in fabrics %}
+          {% if fab.photo_path %}
+          <option value="{{ fab.id }}">
+            {{ fab.client_name }} · {{ fab.fabric_type }} {{ fab.color }}
+          </option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Windows -->
+  <div class="bp-section">
+    <h3>Windows (optional — up to 4)</h3>
+    {% for i in range(4) %}
+    <div class="window-row">
+      <div class="bp-field" style="min-width:80px;">
+        <label>Wall</label>
+        <select name="win_wall_{{ i }}">
+          <option value="">—</option>
+          <option value="top">Top</option>
+          <option value="bottom">Bottom</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+      </div>
+      <div class="bp-field">
+        <label>Offset from edge</label>
+        <input name="win_offset_{{ i }}" placeholder="e.g. 24">
+      </div>
+      <div class="bp-field">
+        <label>Width</label>
+        <input name="win_width_{{ i }}" placeholder="e.g. 72">
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn-generate">Generate Blueprint</button>
+  <span style="font-size:11px; color:#999; margin-left:12px;">Opens in new tab — print to PDF from there</span>
+
+</form>
+
+<script>
+const HW = {{ hardware | tojson }};
+
+function applyHardware(key) {
+  const hw = HW[key];
+  if (!hw) return;
+  document.getElementById('br-max-hint').textContent =
+    'Max ' + hw.bracket_spacing_max + '" for this track';
+  document.getElementById('hw-note').textContent = hw.note || '';
+  const brInput = document.getElementById('bracket-spacing');
+  if (!brInput.dataset.userEdited) {
+    brInput.value = hw.bracket_spacing_max;
+  }
+}
+
+document.getElementById('bracket-spacing').addEventListener('input', function() {
+  this.dataset.userEdited = '1';
+});
+
+// init on load
+applyHardware(document.getElementById('hw-select').value);
+</script>
+{% endblock %}

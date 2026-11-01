@@ -1,6 +1,6 @@
 import os
 import uuid
-from flask import Flask, redirect, request, render_template, url_for, flash, send_from_directory
+from flask import Flask, redirect, request, render_template, url_for, flash, send_from_directory, Response
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import qb_auth
@@ -8,6 +8,7 @@ import qb_api
 import db
 import email_reader
 import outreach
+import blueprint as bp_agent
 from logger import log_error, log_info
 
 load_dotenv()
@@ -345,6 +346,88 @@ def delete_lead(lead_id):
 @app.route('/static/fabric_photos/<filename>')
 def fabric_photo(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+
+# ── Blueprint Agent ───────────────────────────────────────────────────────────
+
+@app.route('/blueprint', methods=['GET', 'POST'])
+def blueprint_form():
+    fabrics  = db.get_fabrics()
+    hardware = bp_agent.HARDWARE
+
+    if request.method == 'POST':
+        f = request.form
+        def fi(key, default=0):
+            return f.get(key, str(default)).strip() or str(default)
+
+        windows = []
+        for i in range(4):
+            wwall = f.get(f'win_wall_{i}', '').strip()
+            woff  = f.get(f'win_offset_{i}', '').strip()
+            ww    = f.get(f'win_width_{i}', '').strip()
+            if wwall and ww:
+                windows.append({"wall": wwall, "offset": woff or "0", "width": ww})
+
+        # Resolve fabric photos
+        fabric_id  = f.get('fabric_id', '').strip()
+        lining_id  = f.get('lining_id', '').strip()
+        fabric_url = lining_url = None
+        fabric_name = lining_name = ''
+        if fabric_id:
+            fab = db.get_fabric(int(fabric_id))
+            if fab and fab.get('photo_path'):
+                fabric_url  = url_for('fabric_photo', filename=fab['photo_path'], _external=False)
+                fabric_name = f"{fab.get('fabric_type','')} {fab.get('color','')}".strip()
+        if lining_id:
+            lin = db.get_fabric(int(lining_id))
+            if lin and lin.get('photo_path'):
+                lining_url  = url_for('fabric_photo', filename=lin['photo_path'], _external=False)
+                lining_name = f"{lin.get('fabric_type','')} {lin.get('color','')}".strip()
+
+        hw_key = f.get('hardware_key', 'custom')
+        hw     = bp_agent.HARDWARE.get(hw_key, bp_agent.HARDWARE['custom'])
+
+        m = {
+            "client":  f.get('client', '').strip(),
+            "project": f.get('project', '').strip(),
+            "room":    f.get('room', '').strip(),
+
+            "room_width":               fi('room_width'),
+            "room_length":              fi('room_length'),
+            "ceiling_height":           fi('ceiling_height'),
+
+            "soffit_wall":              f.get('soffit_wall', 'top'),
+            "soffit_bottom_from_floor": fi('soffit_bottom_from_floor'),
+            "soffit_depth":             fi('soffit_depth'),
+            "soffit_length":            fi('soffit_length'),
+            "soffit_offset":            fi('soffit_offset', 0),
+
+            "hardware_key":    hw_key,
+            "track_length":    fi('track_length'),
+            "track_offset":    fi('track_offset', 0),
+            "track_inset":     fi('track_inset', 0),
+            "bracket_spacing": fi('bracket_spacing', hw['bracket_spacing_max']),
+
+            "curtain_drop":  fi('curtain_drop', 0),
+            "panel_count":   int(f.get('panel_count') or 0),
+
+            "fabric_url":  fabric_url,
+            "fabric_name": fabric_name,
+            "lining_url":  lining_url,
+            "lining_name": lining_name,
+
+            "windows": windows,
+        }
+        try:
+            html = bp_agent.render_blueprint_html(m)
+            return Response(html, mimetype='text/html')
+        except Exception as e:
+            flash(f'Blueprint error: {e}', 'error')
+
+    return render_template('blueprint_form.html',
+                           demo=bp_agent.DEMO,
+                           fabrics=fabrics,
+                           hardware=hardware)
 
 
 # ── Run ───────────────────────────────────────────────────────────────────────

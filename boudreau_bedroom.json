@@ -1,0 +1,36 @@
+{
+  "client":  "Alex Boudreau",
+  "project": "WO-2026-001",
+  "room":    "Primary Bedroom · E18",
+
+  "_note": "Dimensions TBD — placeholders used for rendering. Confirm with Fabian before fabrication.",
+
+  "room_width":   "14-0",
+  "room_length":  "16-0",
+  "ceiling_height": "9-0",
+
+  "soffit_wall":              "top",
+  "soffit_bottom_from_floor": "8-2",
+  "soffit_depth":             "10",
+  "soffit_length":            "13-0",
+  "soffit_offset":            "6",
+
+  "hardware_key":    "ripplefold",
+  "mount":           "above",
+  "track_overhang":  "1",
+
+  "track_length":    "12-6",
+  "track_offset":    "3",
+  "track_inset":     "0",
+  "bracket_spacing": "16",
+
+  "sheer":        true,
+  "curtain_drop": "102",
+  "panel_count":  4,
+
+  "windows": [
+    { "wall": "top", "offset": "12",   "width": "36" },
+    { "wall": "top", "offset": "60",   "width": "36" },
+    { "wall": "top", "offset": "108",  "width": "36" }
+  ]
+}
